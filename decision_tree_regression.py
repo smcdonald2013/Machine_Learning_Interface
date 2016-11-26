@@ -6,7 +6,7 @@ from base_models import Regression
 import scikit_mixin
 
 class DTR(Regression):
-    """Class for Support Vector Regression Models. 
+    """Class for Decision Tree Regression Models. 
 
     Parameters
     ----------
@@ -97,3 +97,4 @@ class DTR(Regression):
              print('Design this later!')
         else:
             print('Unsupported output_option')
+            
