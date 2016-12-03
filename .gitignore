@@ -1,0 +1,4 @@
+dist/
+build/
+Machine_Learning_Interface.egg-info\
+*.pyc
