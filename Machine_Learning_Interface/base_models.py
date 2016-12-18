@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import sklearn as sk
 import abc
+import scikit_mixin
 
 class Model(object): 
     """Abstract base class for models.
@@ -162,6 +163,7 @@ class Regression(Model):
         self.tss, self.ess                            = self._estimate_tss_ess()
         self.rsquared, self.rsquared_adj              = self._estimate_r2_r2adj()
         self.mse                                      = self._estimate_mse()
+        scikit_mixin.residual_plot(self.resid, self.fittedvalues)
 
     @abc.abstractmethod
     def predict(self, x_val): 

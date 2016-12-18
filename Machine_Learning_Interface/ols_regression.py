@@ -3,6 +3,7 @@ import pandas as pd
 from base_models import Regression
 import scikit_mixin
 from sklearn import linear_model
+import scikit_mixin
 
 class OLSRegression(Regression):
     """OLS Regression Class. 

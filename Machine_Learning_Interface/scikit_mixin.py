@@ -79,3 +79,10 @@ def validation_plot(estimator, title, X, y, param_name, param_range, cv_param, c
     plt.axvline(cv_param, linestyle='--', color='k', label=param_name + ': CV estimate')
     plt.legend(loc="best")
     return plt
+
+def residual_plot(residuals, fittedvalues):
+    plt.scatter(residuals, fittedvalues)
+    plt.xlabel('Residuals')
+    plt.ylabel('Fitted Values')
+    plt.title('Fitted vs Residuals')
+    return plt
