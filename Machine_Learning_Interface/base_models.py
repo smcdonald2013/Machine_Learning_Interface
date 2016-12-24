@@ -164,6 +164,7 @@ class Regression(Model):
         self.rsquared, self.rsquared_adj              = self._estimate_r2_r2adj()
         self.mse                                      = self._estimate_mse()
         scikit_mixin.residual_plot(self.resid, self.fittedvalues)
+        scikit_mixin.qq_plot(self.resid)
 
     @abc.abstractmethod
     def predict(self, x_val): 

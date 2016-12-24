@@ -2,6 +2,7 @@ import numpy as np
 from sklearn import learning_curve
 from cycler import cycler
 import matplotlib.pyplot as plt
+import statsmodels.api as sm
 
 def learning_curve_plot(estimator, title, X, y, cv=5, scoring='mean_squared_error', train_sizes=np.linspace(.1, 1.0, 5), **kwargs):
     """
@@ -86,3 +87,7 @@ def residual_plot(residuals, fittedvalues):
     plt.ylabel('Fitted Values')
     plt.title('Fitted vs Residuals')
     return plt
+
+def qq_plot(residuals):
+    fig = sm.qqplot(residuals, line='s')
+    return fig
