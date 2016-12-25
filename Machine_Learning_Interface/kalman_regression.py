@@ -3,6 +3,7 @@ import pandas as pd
 from pykalman import KalmanFilter
 import abc
 from base_models import Regression
+import matplotlib.pyplot as plt
 
 class KalmanRegression(Regression):
     """Abstract base class for regularized regression models. 
@@ -49,6 +50,14 @@ class KalmanRegression(Regression):
 
         if self.em:
             kf = KalmanFilter(n_dim_obs=1, n_dim_state=self.number_feat,
+                  transition_matrices=np.eye(self.number_feat),
+                  em_vars=['transition_covariance', 'observation_covariance'],
+                  observation_matrices=obs_mat)
+            state_means, state_covs = kf.em(self.y_train.values).filter(self.y_train.values)
+            self.params_ts = pd.DataFrame(index = self.y_train.index, data = state_means, columns = self.x_train.columns)
+            self.cov_ts = state_covs
+            '''
+            kf = KalmanFilter(n_dim_obs=1, n_dim_state=self.number_feat,
                               transition_matrices=np.eye(self.number_feat),
                               transition_covariance=trans_cov,
                               observation_matrices=obs_mat)
@@ -56,6 +65,7 @@ class KalmanRegression(Regression):
             self.params_ts = pd.DataFrame(index = self.y_train.index, columns = self.x_train.columns)
             self.params_ts.ix[:, :] = kf.initial_state_mean
             self.cov_ts = kf.initial_state_covariance
+            '''
         else:
             kf = KalmanFilter(n_dim_obs=1, n_dim_state=self.number_feat,
                           initial_state_mean=np.zeros(self.number_feat),
@@ -65,6 +75,7 @@ class KalmanRegression(Regression):
                           observation_covariance=1.0,
                           observation_matrices=obs_mat)
             state_means, state_covs = kf.filter(self.y_train.values)
+            self.betas = state_means
             self.params_ts = pd.DataFrame(index = self.y_train.index, data = state_means, columns = self.x_train.columns)
             self.cov_ts = state_covs
         return kf
@@ -72,6 +83,7 @@ class KalmanRegression(Regression):
     def diagnostics(self):
         super(KalmanRegression, self).diagnostics() 
         self.coefs = self._estimate_coefficients()
+        self.beta_plot()
 
     def predict(self, x_val):
         super(KalmanRegression, self).predict(x_val) 
@@ -104,4 +116,12 @@ class KalmanRegression(Regression):
                                                        observation = obs)
 
         self.params = pd.Series(index = self.x_df.columns, data = new_means.data, name = 'params')
-        self.cov_ts = np.append(self.cov_ts, new_covs)
+        self.cov_ts = np.append(self.cov_ts, new_covs)       
+
+    def beta_plot(self):
+        plt.figure()
+        plt.plot(self.params_ts)
+        plt.xlabel('Date')
+        plt.ylabel('Coefficient')
+        plt.title('Coefficients Over Time')
+        return plt
