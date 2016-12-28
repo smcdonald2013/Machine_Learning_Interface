@@ -34,10 +34,11 @@ class KalmanRegression(Regression):
         Fitted coefficients. Index is coefficient names. 
         Underlying fitted model. View documentation of derived classes for information
     """
-    def __init__(self, intercept=False, scale=False, em=False):    
+    def __init__(self, intercept=False, scale=False, em_vars=None, **kwargs):    
         self.intercept                                = intercept
         self.scale                                    = scale
-        self.em                                       = em
+        self.em_vars                                  = em_vars
+        self.kwargs                                   = kwargs
 
     def _estimate_model(self):
 
@@ -45,39 +46,23 @@ class KalmanRegression(Regression):
 
         obs_mat = (self.x_train.values.T).T[:, np.newaxis]
 
-        delta = 1e-5
-        trans_cov = delta / (1 - delta) * np.eye(self.number_feat)
-
-        if self.em:
+        if self.em_vars is not None:
             kf = KalmanFilter(n_dim_obs=1, n_dim_state=self.number_feat,
                   transition_matrices=np.eye(self.number_feat),
-                  em_vars=['transition_covariance', 'observation_covariance'],
-                  observation_matrices=obs_mat)
+                  em_vars=self.em_vars, observation_matrices=obs_mat, **self.kwargs)
             state_means, state_covs = kf.em(self.y_train.values).filter(self.y_train.values)
-            self.params_ts = pd.DataFrame(index = self.y_train.index, data = state_means, columns = self.x_train.columns)
-            self.cov_ts = state_covs
-            '''
-            kf = KalmanFilter(n_dim_obs=1, n_dim_state=self.number_feat,
-                              transition_matrices=np.eye(self.number_feat),
-                              transition_covariance=trans_cov,
-                              observation_matrices=obs_mat)
-            kf.em(self.y_train.values)
-            self.params_ts = pd.DataFrame(index = self.y_train.index, columns = self.x_train.columns)
-            self.params_ts.ix[:, :] = kf.initial_state_mean
-            self.cov_ts = kf.initial_state_covariance
-            '''
         else:
+            delta = 1e-5
+            trans_cov = delta / (1 - delta) * np.eye(self.number_feat)
+
             kf = KalmanFilter(n_dim_obs=1, n_dim_state=self.number_feat,
-                          initial_state_mean=np.zeros(self.number_feat),
-                          initial_state_covariance=np.ones((self.number_feat, self.number_feat)),
-                          transition_matrices=np.eye(self.number_feat),
-                          transition_covariance=trans_cov,
-                          observation_covariance=1.0,
-                          observation_matrices=obs_mat)
+                          initial_state_mean=np.zeros(self.number_feat), initial_state_covariance=np.ones((self.number_feat, self.number_feat)),
+                          transition_matrices=np.eye(self.number_feat), transition_covariance=trans_cov,
+                          observation_covariance=1.0, observation_matrices=obs_mat, **self.kwargs)
             state_means, state_covs = kf.filter(self.y_train.values)
-            self.betas = state_means
-            self.params_ts = pd.DataFrame(index = self.y_train.index, data = state_means, columns = self.x_train.columns)
-            self.cov_ts = state_covs
+        self.betas = state_means
+        self.params_ts = pd.DataFrame(index = self.y_train.index, data = state_means, columns = self.x_train.columns)
+        self.cov_ts = state_covs
         return kf
 
     def diagnostics(self):
