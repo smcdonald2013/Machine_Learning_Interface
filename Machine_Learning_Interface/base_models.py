@@ -223,6 +223,9 @@ class Classification(Model):
             self.prob_array = self._estimate_prob()
             self.log_loss = self._estimate_log_loss()
         self.accuracy                                 = self._estimate_accuracy()
+        scikit_mixin.confusion_matrix_plot(self.y_train, self.fittedvalues)
+        scikit_mixin.roc_curve_plot(self.y_train, self.fittedvalues)
+
 
     @abc.abstractmethod
     def predict(self, x_val): 
@@ -246,8 +249,8 @@ class Classification(Model):
         return log_loss
 
     def _estimate_accuracy(self):
-        log_loss = sk.metrics.accuracy_score(self.fittedvalues, self.y_train)
-        return log_loss
+        accuracy = sk.metrics.accuracy_score(self.fittedvalues, self.y_train)
+        return accuracy
 
 class DimensionalityReduction(object): 
     """Abstract base class for dimensionality reduction.

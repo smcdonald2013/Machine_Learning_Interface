@@ -3,6 +3,8 @@ from sklearn import learning_curve
 from cycler import cycler
 import matplotlib.pyplot as plt
 import statsmodels.api as sm
+from sklearn.metrics import roc_curve, auc, confusion_matrix
+import itertools
 
 def learning_curve_plot(estimator, title, X, y, cv=5, scoring='mean_squared_error', train_sizes=np.linspace(.1, 1.0, 5), **kwargs):
     """
@@ -91,3 +93,57 @@ def residual_plot(residuals, fittedvalues):
 def qq_plot(residuals):
     fig = sm.qqplot(residuals, line='s')
     return fig
+
+def roc_curve_plot(trueclasses, fittedvalues):
+    # Compute ROC curve and ROC area
+    fpr, tpr, _ = roc_curve(trueclasses, fittedvalues)
+    roc_auc     = auc(fpr, tpr)
+
+    plt.figure()
+    lw = 2
+    plt.plot(fpr, tpr, color='darkorange',
+             lw=lw, label='ROC curve (area = %0.2f)' % roc_auc)
+    plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('Receiver operating characteristic')
+    plt.legend(loc="lower right")
+    return plt
+
+def confusion_matrix_plot(truevalues, fittedvalues,
+                          normalize=False,
+                          title='Confusion matrix',
+                          cmap=plt.cm.Blues):
+    """
+    This function prints and plots the confusion matrix.
+    Normalization can be applied by setting `normalize=True`.
+    """
+
+    cm = confusion_matrix(truevalues, fittedvalues)
+    classes = set(truevalues.values)
+    plt.figure()
+    plt.imshow(cm, interpolation='nearest', cmap=cmap)
+    plt.title(title)
+    plt.colorbar()
+    tick_marks = np.arange(len(classes))
+    plt.xticks(tick_marks, classes, rotation=45)
+    plt.yticks(tick_marks, classes)
+
+    if normalize:
+        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+        print("Normalized confusion matrix")
+    else:
+        print('Confusion matrix, without normalization')
+
+    thresh = cm.max() / 2.
+    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+        plt.text(j, i, cm[i, j],
+                 horizontalalignment="center",
+                 color="white" if cm[i, j] > thresh else "black")
+
+    plt.tight_layout()
+    plt.ylabel('True label')
+    plt.xlabel('Predicted label')
+    return plt
