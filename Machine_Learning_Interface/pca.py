@@ -18,11 +18,15 @@ class PCA(DimensionalityReduction):
     def diagnostics(self):
         super(PCA, self).diagnostics() 
         self.scree_plot()
+        self.evecs = self.model.components_ #dot(evecs, x) gives transformed data
+        self.evals = self.model.explained_variance_
+        scikit_mixin.biplot(self.val_df, self.evals, self.evecs, var_names=self.x_val.columns)
 
     def transform(self, x_val):
         super(PCA, self).transform(x_val) 
         val_pred = self.model.transform(self.x_val)
         val_df   = pd.DataFrame(index=self.x_val.index, data=val_pred)  ###TO DO: Title Factors
+        self.val_df = val_df
         return val_df    
 
     def _estimate_fittedvalues(self):
@@ -33,19 +37,20 @@ class PCA(DimensionalityReduction):
         return data
 
     def _estimate_model(self):
-        self.model = decomposition.PCA(**self.kwargs)
-        self.model.fit(self.x_train)
-        return self.model
+        model = decomposition.PCA(**self.kwargs)
+        model.fit(self.x_train)
+        return model
 
     def scree_plot(self):
         plt.figure(1, figsize=(4, 3))
         plt.clf()
         plt.axes([.2, .2, .7, .7])
         plt.plot(self.model.explained_variance_ratio_, linewidth=2)
+        plt.title('Scree Plot')
         plt.axis('tight')
         plt.xlabel('n_components')
         plt.ylabel('explained_variance_ratio_')
-
+  
     #Correlation or covariance matrix fitting option
     #eigenvalues (scree plot)
     #proportion of variance (scree plot)
