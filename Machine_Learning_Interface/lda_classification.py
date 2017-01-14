@@ -12,9 +12,9 @@ class LDA(Classification):
         self.kwargs         = kwargs
 
     def _estimate_model(self):
-        self.model = lda.LDA(**self.kwargs)
-        self.model.fit(self.x_train, self.y_train)
-        return self.model
+        model = lda.LDA(**self.kwargs)
+        model.fit(self.x_train, self.y_train)
+        return model
 
     def _estimate_coefficients(self):
         coef_array =  np.append(self.model.coef_,self.model.intercept_)

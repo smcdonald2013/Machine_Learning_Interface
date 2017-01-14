@@ -225,7 +225,7 @@ class Classification(Model):
         self.accuracy                                 = self._estimate_accuracy()
         scikit_mixin.confusion_matrix_plot(self.y_train, self.fittedvalues)
         scikit_mixin.roc_curve_plot(self.y_train, self.fittedvalues)
-
+        print sk.metrics.classification_report(self.y_train, self.fittedvalues)
 
     @abc.abstractmethod
     def predict(self, x_val): 

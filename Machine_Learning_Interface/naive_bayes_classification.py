@@ -28,10 +28,10 @@ class NaiveBayesClassification(Classification):
         return data_int
 
     def diagnostics(self):
-        super(NaiveBayesCLassification, self).diagnostics() 
+        super(NaiveBayesClassification, self).diagnostics() 
 
     def predict(self, x_val):
-        super(NaiveBayesCLassification, self).predict(x_val) 
+        super(NaiveBayesClassification, self).predict(x_val) 
         val_pred = self.model.predict(self.x_val)
         val_df   = pd.Series(index=self.x_val.index, data=val_pred, name='predictions')
         return val_df   
