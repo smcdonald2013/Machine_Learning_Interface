@@ -231,3 +231,34 @@ def plot_calibration_curve(est, name, X_train, y_train):
 
     #plt.tight_layout()
     return plt
+
+def biplot(lda, X, y, y_pred):
+    splot = plt.figure()
+
+    tp = (y == y_pred)  # True Positive
+    tp0, tp1 = tp[y == 0], tp[y == 1]
+    X0, X1 = X[y == 0], X[y == 1]
+    X0_tp, X0_fp = X0[tp0], X0[~tp0]
+    X1_tp, X1_fp = X1[tp1], X1[~tp1]
+
+    alpha = 0.5
+
+    # class 0: dots
+    plt.plot(X0_tp.ix[:, 0], X0_tp.ix[:, 1], 'o', alpha=alpha,
+             color='red')
+    plt.plot(X0_fp.ix[:, 0], X0_fp.ix[:, 1], '*', alpha=alpha,
+             color='#990000')  # dark red
+
+    # class 1: dots
+    plt.plot(X1_tp.ix[:, 0], X1_tp.ix[:, 1], 'o', alpha=alpha,
+             color='blue')
+    plt.plot(X1_fp.ix[:, 0], X1_fp.ix[:, 1], '*', alpha=alpha,
+             color='#000099')  # dark blue
+
+    # means
+    plt.plot(lda.model.means_[0][0], lda.model.means_[0][1],
+             'o', color='black', markersize=10)
+    plt.plot(lda.model.means_[1][0], lda.model.means_[1][1],
+             'o', color='black', markersize=10)
+
+    return plot
