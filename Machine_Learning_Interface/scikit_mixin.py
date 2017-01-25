@@ -232,7 +232,7 @@ def plot_calibration_curve(est, name, X_train, y_train):
     #plt.tight_layout()
     return plt
 
-def biplot(lda, X, y, y_pred):
+def class_plot(mod, X, y, y_pred):
     splot = plt.figure()
 
     tp = (y == y_pred)  # True Positive
@@ -244,21 +244,24 @@ def biplot(lda, X, y, y_pred):
     alpha = 0.5
 
     # class 0: dots
-    plt.plot(X0_tp.ix[:, 0], X0_tp.ix[:, 1], 'o', alpha=alpha,
+    plt.plot(X0_tp.iloc[:, 0], X0_tp.iloc[:, 1], 'o', alpha=alpha,
              color='red')
-    plt.plot(X0_fp.ix[:, 0], X0_fp.ix[:, 1], '*', alpha=alpha,
+    plt.plot(X0_fp.iloc[:, 0], X0_fp.iloc[:, 1], '*', alpha=alpha,
              color='#990000')  # dark red
 
     # class 1: dots
-    plt.plot(X1_tp.ix[:, 0], X1_tp.ix[:, 1], 'o', alpha=alpha,
+    plt.plot(X1_tp.iloc[:, 0], X1_tp.iloc[:, 1], 'o', alpha=alpha,
              color='blue')
-    plt.plot(X1_fp.ix[:, 0], X1_fp.ix[:, 1], '*', alpha=alpha,
+    plt.plot(X1_fp.iloc[:, 0], X1_fp.iloc[:, 1], '*', alpha=alpha,
              color='#000099')  # dark blue
 
     # means
-    plt.plot(lda.model.means_[0][0], lda.model.means_[0][1],
+    plt.plot(mod.model.means_[0][0], mod.model.means_[0][1],
              'o', color='black', markersize=10)
-    plt.plot(lda.model.means_[1][0], lda.model.means_[1][1],
+    plt.plot(mod.model.means_[1][0], mod.model.means_[1][1],
              'o', color='black', markersize=10)
 
-    return plot
+    plt.xlabel(X.columns[0])
+    plt.ylabel(X.columns[1])
+
+    return plt
