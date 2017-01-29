@@ -163,12 +163,13 @@ def biplot(pcs, evals, evecs, var_names=None, xpc=1, ypc=2):
     plt.title('Biplot')
     plt.scatter(xs, ys, c='k', marker='.')
 
-    tvars = np.dot(np.eye(pcs.shape[0], pcs.shape[1]), evecs) * singvals
+    if kernel == False: 
+        tvars = np.dot(np.eye(pcs.shape[0], pcs.shape[1]), evecs) * singvals
 
-    for i, col in enumerate(var_names):
-        x, y = tvars[i][xpc], tvars[i][ypc]
-        plt.arrow(0, 0, x, y, color='r', width=0.002, head_width=0.05)
-        plt.text(x* 1.4, y * 1.4, col, color='r', ha='center', va='center')
+        for i, col in enumerate(var_names):
+            x, y = tvars[i][xpc], tvars[i][ypc]
+            plt.arrow(0, 0, x, y, color='r', width=0.002, head_width=0.05)
+            plt.text(x* 1.4, y * 1.4, col, color='r', ha='center', va='center')
     plt.xlabel('PC{}'.format(xpc + 1))
     plt.ylabel('PC{}'.format(ypc + 1))   
     return plt 
