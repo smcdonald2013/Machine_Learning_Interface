@@ -151,7 +151,7 @@ def confusion_matrix_plot(truevalues, fittedvalues,
     plt.xlabel('Predicted label')
     return plt
 
-def biplot(pcs, evals, evecs, var_names=None, xpc=1, ypc=2):
+def biplot(pcs, evals, evecs, var_names=None, var=True, xpc=1, ypc=2):
 
     xpc, ypc = (xpc - 1, ypc - 1)
     singvals = np.sqrt(evals)
@@ -163,7 +163,7 @@ def biplot(pcs, evals, evecs, var_names=None, xpc=1, ypc=2):
     plt.title('Biplot')
     plt.scatter(xs, ys, c='k', marker='.')
 
-    if kernel == False: 
+    if var is False: 
         tvars = np.dot(np.eye(pcs.shape[0], pcs.shape[1]), evecs) * singvals
 
         for i, col in enumerate(var_names):

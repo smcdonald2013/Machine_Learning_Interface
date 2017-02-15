@@ -19,7 +19,7 @@ class PCA(DimensionalityReduction):
     def diagnostics(self):
         super(PCA, self).diagnostics() 
         self.scree_plot(self.evals)
-        scikit_mixin.biplot(self.val_df, self.evals, self.evecs, var_names=self.x_val.columns)
+        scikit_mixin.biplot(self.val_df, self.evals, self.evecs, var_names=self.x_val.columns, var=self.kernel)
 
     def transform(self, x_val):
         super(PCA, self).transform(x_val) 
