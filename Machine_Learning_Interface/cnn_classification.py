@@ -8,13 +8,16 @@ from keras.utils import np_utils
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation, Flatten
 from keras.layers import Convolution2D, ZeroPadding2D, MaxPooling2D
+from sklearn.model_selection import train_test_split
 from base_models import Classification
 
 class CNNClassification(Classification): #Basic CNN
-    def __init__(self, intercept=False, scale=False, batch_size=25, n_epoch=10, loss='categorical_crossentropy', nb_filters=32, pool_size = (2,2), kernel_size = (3,3), model_provided=None):
+    def __init__(self, intercept=False, scale=False, prob=False, batch_size=25, n_epoch=10, train_size=.8, loss='categorical_crossentropy', nb_filters=32, pool_size = (2,2), kernel_size = (3,3), model_provided=None):
         self.intercept = intercept
         self.scale = scale
+        self.prob = prob
         self.batch_size = batch_size
+        self.train_size = train_size
         self.n_epoch = n_epoch
         self.loss = loss
         self.nb_filters = nb_filters
@@ -23,6 +26,8 @@ class CNNClassification(Classification): #Basic CNN
         self.model_provided = model_provided
 
     def _estimate_model(self):
+            self.x_train, self.x_val, self.y_train, self.y_val = train_test_split(self.x_train, self.y_train, train_size=self.train_size)
+
             #keras parameters
             nb_classes = int(np.unique(self.y_train).shape[0])
             color_dim = int(self.x_train.shape[1])
@@ -34,13 +39,12 @@ class CNNClassification(Classification): #Basic CNN
 
             # convert class vectors to binary class matrices
             Y_train = np_utils.to_categorical(self.y_train, nb_classes)
+            Y_val = np_utils.to_categorical(self.y_val, nb_classes)
 
             model = Sequential()
 
-            model.add(Convolution2D(self.nb_filters, self.kernel_size[0], self.kernel_size[1], border_mode='valid', input_shape=input_shape, dim_ordering='th'))
-            model.add(Activation('relu'))
-            model.add(Convolution2D(self.nb_filters, self.kernel_size[0], self.kernel_size[1],dim_ordering='th'))
-            model.add(Activation('relu'))
+            model.add(Convolution2D(self.nb_filters, self.kernel_size[0], self.kernel_size[1], border_mode='valid', input_shape=input_shape, dim_ordering='th', activation='relu'))
+            model.add(Convolution2D(self.nb_filters, self.kernel_size[0], self.kernel_size[1], dim_ordering='th', activation='relu'))
             model.add(MaxPooling2D(pool_size=self.pool_size,dim_ordering='th'))
             model.add(Dropout(0.25))
 
@@ -51,9 +55,9 @@ class CNNClassification(Classification): #Basic CNN
             model.add(Dense(nb_classes))
             model.add(Activation('softmax'))
 
-            model.compile(loss='categorical_crossentropy', optimizer='adadelta', metrics=['accuracy'])
+            model.compile(loss=self.loss, optimizer='adadelta', metrics=['accuracy'])
 
-            model.fit(self.x_train, Y_train, batch_size=self.batch_size, nb_epoch=self.n_epoch, verbose=1)
+            model.fit(self.x_train, Y_train, batch_size=self.batch_size, nb_epoch=self.n_epoch, validation_data=(self.x_val, Y_val), verbose=1)
 
             return model
 
@@ -65,6 +69,7 @@ class CNNClassification(Classification): #Basic CNN
 
     def _estimate_fittedvalues(self):
         fittedvals = self.model.predict(self.x_train)
+        fittedvals = self.model.predict_classes(self.x_train)
         #fitted_df   = pd.Series(index=self.x_train.index, data=fittedvals.reshape(self.number_obs,), name='fitted')
         return fittedvals
 
