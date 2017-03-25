@@ -3,11 +3,13 @@ import pandas as pd
 from scipy import stats
 import statsmodels.api as sm
 from statsmodels.graphics.api import qqplot
+from statsmodels.tsa import stattools
 from cycler import cycler
 import matplotlib.pyplot as plt
 import abc
 from base_models import Regression
 import scikit_mixin
+from sklearn import metrics
 
 class ARMARegression(Regression):
 
@@ -31,28 +33,48 @@ class ARMARegression(Regression):
             model = sm.tsa.ARMA(self.x_train, self.order).fit()
         else: 
             model = sm.tsa.ARMA(self.x_train, self.order).fit()
+        self.k_ar = model.k_ar
+        self.y_train = self.y_train[self.k_ar:]
         return model
 
     def eda(self):
         self.series_plot(self.x_train)
         self.acf_plot(self.x_train)
         self.pacf_plot(self.x_train)
+        print self.adf(self.x_train.iloc[:,0])
 
     def diagnostics(self):
         super(ARMARegression, self).diagnostics() 
         self.residual_time_plot(self.fittedvalues)
         self.acf_plot(self.fittedvalues)
         self.pacf_plot(self.fittedvalues)
+        print self.adf(self.y_train)
         print self.model.params
         return self.output_df(self.fittedvalues)
         #qqplot(self.fittedvalues, line='q', fit=True)
         #sm.graphics.tsa.plot_acf(self.fittedvalues.values.squeeze(), lags=40)
         #sm.graphics.tsa.plot_pacf(self.fittedvalues, lags=40, ax=ax2)
 
-    def predict(self, x_val):
+    def differencing(self, diff):
+        self.diff = diff
+        self.x_original = self.x_train
+        self.x_train = self.x_train.diff(diff).dropna()
+        self.y_train = self.y_train.diff(diff).dropna()
+        return self.x_train
+
+    def adf(self, residuals, options = ['nc', 'c', 'ct', 'ctt']):
+        adf_dict = {}
+        for x in options:
+            adf_dict[x] = stattools.adfuller(residuals, maxlag=None, regression=x, autolag='AIC')[1]
+        adf_df = pd.DataFrame(adf_dict, index=['P Value'])
+        return adf_df
+
+    def predict(self, x_val, start = 1, end = 1, dynamic=True):
         super(ARMARegression, self).predict(x_val) 
-        #val_pred = self.model.predict(self.x_val)
-        val_pred = self.model.resid
+        if start and end is not None:
+            start = self.number_obs
+            end = self.x_val.shape[0]+self.number_obs
+        val_pred = self.model.predict(start, end, self.x_val, dynamic)
         val_df   = pd.Series(index=self.x_val.index, data=val_pred, name='predictions')
         return val_df    
 
@@ -63,7 +85,7 @@ class ARMARegression(Regression):
         return coef_df
 
     def _estimate_fittedvalues(self):
-        fitted_values = self.predict(self.x_train)
+        fitted_values = self.predict(self.x_train, start=None, end=None, dynamic=False)[self.k_ar:]
         return fitted_values
 
     def _add_intercept(self, data):
@@ -81,7 +103,6 @@ class ARMARegression(Regression):
     def order_select(self, series):
         res = sm.tsa.arma_order_select_ic(series, **self.kwargs)
         return res
-
 
     def residual_time_plot(self, residuals):
         plt.figure()
@@ -111,3 +132,33 @@ class ARMARegression(Regression):
         ap = stats.normaltest(residuals)[1]
         output = pd.DataFrame(data=[aic, bic, dw, ap], index=['AIC', 'BIC', 'Durbin-Watson Stat', "D'Agostino-Pearson Normal Test p-value"])
         return output
+
+def walk_forward_validation(model, x, y, initial_train, forecast_horizon, walk_forward_period, rolling=True):
+
+    train_start = 0
+    train_end = train_start + initial_train
+    val_start = train_end + 1
+    val_end = val_start + forecast_horizon
+
+    n_periods = y.shape[0]
+    score = []
+
+    while val_end <= n_periods:
+        x_train = x.iloc[train_start:train_end,:]
+        y_train =  y.iloc[train_start:train_end]
+
+        x_val = x.iloc[val_start:val_end,:]
+        y_val = y.iloc[val_start:val_end]
+
+        model.fit(x_train, y_train)
+        pred = model.predict(x_val)
+        err = metrics.mean_squared_error(pred, y_val)
+        score.append(err)
+
+        if rolling:
+            train_start += walk_forward_period
+        train_end += walk_forward_period
+        val_start += walk_forward_period
+        val_end += walk_forward_period
+
+    return score
