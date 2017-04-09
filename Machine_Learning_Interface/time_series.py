@@ -145,11 +145,12 @@ class ARMARegression(Regression):
         return plt
 
     def fixed_seasonality_test(self, dummies=['D', 'W', 'M', 'Y']):
+        return 0
 
     def dummy(self, x_data):
         dummies = pd.get_dummies(x_data.index.week, prefix='Hello_', drop_first=True)
-        dummies_df = pd.DataFrame(dummies.values, index=dta.index, columns=dummies.columns)
-        temp = dta
+        dummies_df = pd.DataFrame(dummies.values, index=x_data.index, columns=dummies.columns)
+        temp = x_data
         pd.concat([temp,dummies_df], axis=1)
 
 
