@@ -10,6 +10,7 @@ import abc
 from base_models import Regression
 import scikit_mixin
 from sklearn import metrics
+from scipy import signal
 
 class ARMARegression(Regression):
 
@@ -42,6 +43,7 @@ class ARMARegression(Regression):
         self.acf_plot(self.x_train)
         self.pacf_plot(self.x_train)
         print self.adf(self.x_train.iloc[:,0])
+        self.periodigram(self.y_train)
 
     def diagnostics(self):
         super(ARMARegression, self).diagnostics() 
@@ -132,6 +134,24 @@ class ARMARegression(Regression):
         ap = stats.normaltest(residuals)[1]
         output = pd.DataFrame(data=[aic, bic, dw, ap], index=['AIC', 'BIC', 'Durbin-Watson Stat', "D'Agostino-Pearson Normal Test p-value"])
         return output
+
+    def periodigram(self, residuals):
+        f, Pxx_den = signal.periodogram(residuals)
+        plt.figure()
+        plt.semilogy(f, Pxx_den)
+        plt.xlabel('frequency [Hz]')
+        plt.ylabel('PSD [V**2/Hz]')
+        plt.show()
+        return plt
+
+    def fixed_seasonality_test(self, dummies=['D', 'W', 'M', 'Y']):
+
+    def dummy(self, x_data):
+        dummies = pd.get_dummies(x_data.index.week, prefix='Hello_', drop_first=True)
+        dummies_df = pd.DataFrame(dummies.values, index=dta.index, columns=dummies.columns)
+        temp = dta
+        pd.concat([temp,dummies_df], axis=1)
+
 
 def walk_forward_validation(model, x, y, initial_train, forecast_horizon, walk_forward_period, rolling=True):
 

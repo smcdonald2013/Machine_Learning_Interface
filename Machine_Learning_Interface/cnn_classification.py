@@ -38,8 +38,8 @@ class CNNClassification(Classification): #Basic CNN
             input_shape = (color_dim, img_rows, img_cols)
 
             # convert class vectors to binary class matrices
-            Y_train = np_utils.to_categorical(self.y_train, nb_classes)
-            Y_val = np_utils.to_categorical(self.y_val, nb_classes)
+            Y_train = np_utils.to_categorical(self.y_train.values, nb_classes)
+            Y_val = np_utils.to_categorical(self.y_val.values, nb_classes)
 
             model = Sequential()
 
@@ -48,7 +48,7 @@ class CNNClassification(Classification): #Basic CNN
             model.add(MaxPooling2D(pool_size=self.pool_size,dim_ordering='th'))
             model.add(Dropout(0.25))
 
-            model.add(Flatten())
+            model.add(Flatten(name='feature_layer'))
             model.add(Dense(128))
             model.add(Activation('relu'))
             model.add(Dropout(0.5))
@@ -68,7 +68,6 @@ class CNNClassification(Classification): #Basic CNN
         return val_pred
 
     def _estimate_fittedvalues(self):
-        fittedvals = self.model.predict(self.x_train)
         fittedvals = self.model.predict_classes(self.x_train)
         #fitted_df   = pd.Series(index=self.x_train.index, data=fittedvals.reshape(self.number_obs,), name='fitted')
         return fittedvals
