@@ -26,15 +26,14 @@ class RegularizedRegression(Regression):
 
     Attributes
     ----------
-    self.intercept : boolean
+    intercept : boolean
         Whether to fit an intercept to the model.
-    self.scale : boolean
+    scale : boolean
         Whether to scale the data so each variable has mean=0 and variance=1
-    self.cv_folds : int        
-        Number of folds for cross validation
-    self.coefs : pd.Series
-        Fitted coefficients. Index is coefficient names. 
-        Underlying fitted model. View documentation of derived classes for information
+    cv_folds : int
+        Number of folds for k-fold cross validation
+    solver : str
+        Solver to be used by sklearn, dependent on underlying model fit.
     """
     __metaclass__ = abc.ABCMeta
 
@@ -46,6 +45,7 @@ class RegularizedRegression(Regression):
         self.kwargs         = kwargs
 
     def diagnostics(self):
+        """Regularized regression diagnostics."""
         super(RegularizedRegression, self).diagnostics() 
         self.alphas = np.logspace(-10, 5, 100)
         self.coefs  = self._estimate_coefficients()
@@ -57,26 +57,70 @@ class RegularizedRegression(Regression):
         self.regularization_plot()
 
     def predict(self, x_val):
+        """Prediction using fitted model.
+
+        Parameters
+        ----------
+        x_val : pd.DataFrame (n_samples, n_features)
+            X data for making predictions.
+
+        Returns
+        -------
+        val_df : pd.Series (n_samples, )
+            Predicted values.
+        """
         super(RegularizedRegression, self).predict(x_val) 
-        #self.x_val = self._data_preprocess(x_val, rescale=False)
         val_pred = self.model.predict(self.x_val)
         val_df   = pd.Series(index=self.x_val.index, data=val_pred, name='predictions')
         return val_df    
 
     def _estimate_coefficients(self):
-        coef_a =  np.append(self.model.coef_,self.model.intercept_)
+        """Estimates regression coefficients.
+
+        Returns
+        -------
+        coef_df : pd.Series (n_features, )
+            Fitted coefficients of the model.
+        """
+        coef_vals =  np.append(self.model.coef_,self.model.intercept_)
         coef_names = np.append(self.x_train.columns, 'intercept')
-        coef_df = pd.Series(data=coef_a, index=coef_names, name = 'coefficients')
+        coef_df = pd.Series(data=coef_vals, index=coef_names, name = 'coefficients')
         return coef_df
 
     def _estimate_fittedvalues(self):
+        """Estimate fitted values.
+
+        Returns
+        -------
+        fitted_values : pd.Series (n_samples, )
+            Fitted values of model.
+        """
         fitted_values = self.predict(self.x_train)
         return fitted_values
 
     def _add_intercept(self, data):
+        """Overrides base intercept function, just returning data unchanged since sklearn handles intercept internally.
+
+        Parameters
+        ----------
+        data : pd.DataFrame (n_samples, n_features)
+            Training data.
+
+        Returns
+        -------
+        data : pd.DataFrame (n_samples, n_features)
+            Training data, unchanged.
+        """
         return data
 
     def regularization_plot(self):
+        """Regularization plot of coffiecients vs regularization parameter.
+
+        Returns
+        -------
+        plt : matplotlib figure.
+            Regularization plot.
+        """
         plt.figure()
         plt.set_prop_cycle = cycler(color=['b', 'r', 'g', 'c', 'k', 'y', 'm'])
         plt.semilogx(self.alphas, self.coefs_cv)
@@ -97,46 +141,66 @@ class RegularizedRegression(Regression):
         raise NotImplementedError()
 
 class LassoRegression(RegularizedRegression):
+    """Fits Lasso regression using sklearn implementation."""
+
     def _estimate_model(self):
+        """Estimates lasso regression object.
+
+        Returns
+        -------
+        model : sklearn lasso regression or lasso cv object
+            Fitted lasso model.
+        """
         ###Lars Algorithm
         if self.solver == "Lars":
             self.underlying = linear_model.LassoLars(fit_intercept=self.intercept, normalize=False)
             if self.cv_folds is 'IC': #For AIC/BIC. criterion kwarg should be provided.  
-                self.model = linear_model.LassoLarsIC(fit_intercept=self.intercept, normalize=False, **self.kwargs)
+                model = linear_model.LassoLarsIC(fit_intercept=self.intercept, normalize=False, **self.kwargs)
             elif self.cv_folds is not None:
-                self.model = linear_model.LassoLarsCV(fit_intercept=self.intercept, cv=self.cv_folds, normalize=False, **self.kwargs)
+                model = linear_model.LassoLarsCV(fit_intercept=self.intercept, cv=self.cv_folds, normalize=False, **self.kwargs)
             else:
-                self.model = linear_model.Lasso(fit_intercept=self.intercept, **self.kwargs)
+                model = linear_model.Lasso(fit_intercept=self.intercept, **self.kwargs)
         ###Coordinate Descent Algorithm
         elif self.solver == "Coordinate Descent":
             self.underlying = linear_model.Lasso(fit_intercept=self.intercept)
             if self.cv_folds is not None: 
-                self.model = linear_model.LassoCV(fit_intercept=self.intercept, cv=self.cv_folds, **self.kwargs)
+                model = linear_model.LassoCV(fit_intercept=self.intercept, cv=self.cv_folds, **self.kwargs)
             else:
-                self.model = linear_model.Lasso(fit_intercept=self.intercept, **self.kwargs)
+                model = linear_model.Lasso(fit_intercept=self.intercept, **self.kwargs)
         else:
             raise NotImplementedError('Solver not implemented. Choices are Lars or Coordinate Descent.')
         #self.model.fit(np.asanyarray(self.x_train.values,order='F'), self.y_train)
-        self.model.fit(self.x_train, self.y_train)
-        return self.model
+        model.fit(self.x_train, self.y_train)
+        return model
 
     def _gen_cv_paths(self):
+        """Helper function to generate lasso paths."""
         self.alphas, self.coefs_cv, _ = linear_model.lasso_path(self.x_train, self.y_train, fit_intercept=self.intercept, alphas=self.alphas)
         self.coefs_cv = self.coefs_cv.T
         
 class RidgeRegression(RegularizedRegression):
+    """Fits Ridge regression using sklearn implementation."""
+
     def _estimate_model(self):
+        """Estimates ridge regression model.
+
+        Returns
+        -------
+        model : sklearn lasso regression or lasso cv object
+            Fitted lasso model.
+        """
         self.underlying = linear_model.Ridge(fit_intercept=self.intercept)
         if (self.cv_folds is not None) or (self.solver in ['svd', 'eigen']): 
             #Ridge CV by default tests a very limited set of alphas, we expand on this 
             alphas = np.logspace(-10, 5, 100)
-            self.model = linear_model.RidgeCV(alphas=alphas, cv=self.cv_folds, fit_intercept=self.intercept, gcv_mode=self.solver, **self.kwargs)
+            model = linear_model.RidgeCV(alphas=alphas, cv=self.cv_folds, fit_intercept=self.intercept, gcv_mode=self.solver, **self.kwargs)
         else:
-            self.model = linear_model.Ridge(fit_intercept=self.intercept, **self.kwargs)
-        self.model.fit(self.x_train, self.y_train)
-        return self.model
+            model = linear_model.Ridge(fit_intercept=self.intercept, **self.kwargs)
+        model.fit(self.x_train, self.y_train)
+        return model
 
     def _gen_cv_paths(self):
+        """Helper function to generate cv paths. """
         self.coefs_cv = []
         for a in self.alphas:
             self.underlying.set_params(alpha=a)
@@ -144,20 +208,31 @@ class RidgeRegression(RegularizedRegression):
             self.coefs_cv.append(self.underlying.coef_)
             
 class ElasticNetRegression(RegularizedRegression):
+    """Fits Elastic Net Regression using sklearn implementation."""
+
     def _estimate_model(self):
+        """Estimates ridge regression model.
+
+        Returns
+        -------
+        model : sklearn elasticnet or elasticnet cv object
+            Fitted elastic net model.
+        """
         self.underlying = linear_model.ElasticNet(fit_intercept=self.intercept)
         if self.cv_folds is not None: 
-            self.model = linear_model.ElasticNetCV(fit_intercept=self.intercept, cv=self.cv_folds, **self.kwargs)
+            model = linear_model.ElasticNetCV(fit_intercept=self.intercept, cv=self.cv_folds, **self.kwargs)
         else:
-            self.model = linear_model.ElasticNet(fit_intercept=self.intercept, **self.kwargs)
-        self.model.fit(self.x_train, self.y_train)
-        return self.model
+            model = linear_model.ElasticNet(fit_intercept=self.intercept, **self.kwargs)
+        model.fit(self.x_train, self.y_train)
+        return model
 
     def _gen_cv_paths(self):
+        """Helper function to generate cv paths."""
         self.alphas, self.coefs_cv, _ = linear_model.enet_path(self.x_train, self.y_train, fit_intercept=self.intercept, alphas=self.alphas)
         self.coefs_cv = self.coefs_cv.T
 
     def diagnostics(self):
+        """Diagnostics for elastic net regression."""
         if self.cv_folds is not None:
             self.l1_ratios = [.1, .25, .5, .75, .9, .95, .99]
             self.underlying.set_params(alpha=self.model.alpha_, l1_ratio = self.model.l1_ratio_)
