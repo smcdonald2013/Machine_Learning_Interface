@@ -1,5 +1,5 @@
 import numpy as np
-from sklearn import learning_curve
+from sklearn import model_selection
 from cycler import cycler
 import matplotlib.pyplot as plt
 import statsmodels.api as sm
@@ -38,7 +38,7 @@ def learning_curve_plot(estimator, title, X, y, cv=5, scoring='mean_squared_erro
     plt.title(title)
     plt.xlabel("Training examples")
     plt.ylabel("Score")
-    train_sizes, train_scores, test_scores = learning_curve.learning_curve(estimator, X, y, cv=cv, train_sizes=train_sizes, scoring=scoring, **kwargs)
+    train_sizes, train_scores, test_scores = model_selection.learning_curve(estimator, X, y, cv=cv, train_sizes=train_sizes, scoring=scoring, **kwargs)
     if scoring=='mean_squared_error':
         train_scores = -train_scores
         test_scores = -test_scores
@@ -53,14 +53,14 @@ def learning_curve_plot(estimator, title, X, y, cv=5, scoring='mean_squared_erro
 
     plt.fill_between(train_sizes, train_scores_mean - train_scores_std, train_scores_mean + train_scores_std, alpha=0.1, color="r")
     plt.fill_between(train_sizes, test_scores_mean - test_scores_std, test_scores_mean + test_scores_std, alpha=0.1, color="g")
-    plt.plot(train_sizes, train_scores_mean, 'o-', color="r", label="Training score")
+    plt.plot(train_sizes, train_scores_mean, 'o-', color="r", label=("Training " + scoring))
     plt.plot(train_sizes, test_scores_mean, 'o-', color="g", label="Cross-validation score")
 
     plt.legend(loc="best")
     return plt
 
 def validation_plot(estimator, title, X, y, param_name, param_range, cv_param, cv=5, scoring='mean_squared_error', scale='log', **kwargs):
-    train_scores, test_scores = learning_curve.validation_curve(
+    train_scores, test_scores = model_selection.validation_curve(
         estimator, X, y, param_name=param_name, param_range=param_range, cv=cv, scoring=scoring, **kwargs)
     if scoring=='mean_squared_error':
         train_scores = -train_scores

@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 import abc
 from base_models import Regression
 import scikit_mixin
+import warnings
+warnings.filterwarnings('ignore')
 
 class RegularizedRegression(Regression):
     """Abstract base class for regularized regression models. 
@@ -47,14 +49,16 @@ class RegularizedRegression(Regression):
     def diagnostics(self):
         """Regularized regression diagnostics."""
         super(RegularizedRegression, self).diagnostics() 
-        self.alphas = np.logspace(-10, 5, 100)
+        #self.alphas = np.logspace(-10, 5, 100)
         self.coefs  = self._estimate_coefficients()
-        self._gen_cv_paths()
+        print self.coefs
         if self.cv_folds is not None:
+            self.alphas = self.model.alphas
+            self._gen_cv_paths(self.alphas)
             self.underlying.set_params(alpha=self.model.alpha_)
             scikit_mixin.validation_plot(estimator=self.underlying, title='Validation Plot: Alpha', X=self.x_train, y=self.y_train, cv=5, scoring='mean_squared_error', param_name='alpha', param_range=self.alphas, cv_param=self.model.alpha_)
             scikit_mixin.learning_curve_plot(estimator=self.underlying, title='Learning Curve', X=self.x_train, y=self.y_train, cv=5, scoring='mean_squared_error')
-        self.regularization_plot()
+            self.regularization_plot()
 
     def predict(self, x_val):
         """Prediction using fitted model.
@@ -125,6 +129,7 @@ class RegularizedRegression(Regression):
         plt.set_prop_cycle = cycler(color=['b', 'r', 'g', 'c', 'k', 'y', 'm'])
         plt.semilogx(self.alphas, self.coefs_cv)
         plt.gca().invert_xaxis()
+        plt.axvline(self.model.alpha_, linestyle='--', color='k', label='Alpha: CV estimate')
         plt.xlabel('alpha')
         plt.ylabel('weights')
         plt.title('Coefficients as a function of the regularization')
@@ -137,7 +142,7 @@ class RegularizedRegression(Regression):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def _gen_cv_paths(self):
+    def _gen_cv_paths(self, alphas):
         raise NotImplementedError()
 
 class LassoRegression(RegularizedRegression):
@@ -173,9 +178,9 @@ class LassoRegression(RegularizedRegression):
         model.fit(self.x_train, self.y_train)
         return model
 
-    def _gen_cv_paths(self):
+    def _gen_cv_paths(self, alphas):
         """Helper function to generate lasso paths."""
-        self.alphas, self.coefs_cv, _ = linear_model.lasso_path(self.x_train, self.y_train, fit_intercept=self.intercept, alphas=self.alphas)
+        self.alphas, self.coefs_cv, _ = linear_model.lasso_path(self.x_train, self.y_train, fit_intercept=self.intercept, alphas=alphas)
         self.coefs_cv = self.coefs_cv.T
         
 class RidgeRegression(RegularizedRegression):
@@ -199,10 +204,10 @@ class RidgeRegression(RegularizedRegression):
         model.fit(self.x_train, self.y_train)
         return model
 
-    def _gen_cv_paths(self):
+    def _gen_cv_paths(self, alphas):
         """Helper function to generate cv paths. """
         self.coefs_cv = []
-        for a in self.alphas:
+        for a in alphas:
             self.underlying.set_params(alpha=a)
             self.underlying.fit(self.x_train, self.y_train)
             self.coefs_cv.append(self.underlying.coef_)
@@ -226,15 +231,15 @@ class ElasticNetRegression(RegularizedRegression):
         model.fit(self.x_train, self.y_train)
         return model
 
-    def _gen_cv_paths(self):
+    def _gen_cv_paths(self, alphas):
         """Helper function to generate cv paths."""
-        self.alphas, self.coefs_cv, _ = linear_model.enet_path(self.x_train, self.y_train, fit_intercept=self.intercept, alphas=self.alphas)
+        self.alphas, self.coefs_cv, _ = linear_model.enet_path(self.x_train, self.y_train, fit_intercept=self.intercept, alphas=alphas)
         self.coefs_cv = self.coefs_cv.T
 
     def diagnostics(self):
         """Diagnostics for elastic net regression."""
+        super(ElasticNetRegression, self).diagnostics()
         if self.cv_folds is not None:
             self.l1_ratios = [.1, .25, .5, .75, .9, .95, .99]
             self.underlying.set_params(alpha=self.model.alpha_, l1_ratio = self.model.l1_ratio_)
             scikit_mixin.validation_plot(estimator=self.underlying, title='Validation Plot: L1 Ratio', X=self.x_train, y=self.y_train, cv=5, scoring='mean_squared_error', param_name='l1_ratio', param_range=self.l1_ratios, cv_param=self.model.l1_ratio_, scale='linear')
-        super(ElasticNetRegression, self).diagnostics() 
