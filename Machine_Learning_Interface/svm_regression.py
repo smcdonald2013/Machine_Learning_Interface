@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd 
-from sklearn import grid_search, learning_curve, svm
+from sklearn import grid_search, svm
 import matplotlib.pyplot as plt
 from base_models import Regression
 import scikit_mixin
@@ -31,23 +31,29 @@ class SVR(Regression):
     self.cv_folds : int        
         Number of folds for cross validation. If None, 
     """
-    def __init__(self, intercept=False, scale=False, kernel='rbf', parameters=None, cv_folds=None, score=None, **kwargs):
+    def __init__(self, intercept=False, scale=False, kernel='rbf', parameters=None, cv_folds=None, score=None, type='eps', **kwargs):
         self.intercept      = intercept
         self.scale          = scale
         self.kernel         = kernel
         self.parameters     = parameters
         self.cv_folds       = cv_folds
         self.score          = score
+        self.type           = type
         self.kwargs         = kwargs 
 
-    def _estimate_model(self): 
-        self.underlying = svm.SVR(kernel=self.kernel, **self.kwargs)
-        if self.cv_folds is not None: 
-            self.model = grid_search.GridSearchCV(self.underlying, self.parameters, cv=self.cv_folds, scoring=self.score)
+    def _estimate_model(self):
+        if self.type == 'eps':
+            self.underlying = svm.SVR(kernel=self.kernel, **self.kwargs)
+        elif self.type == 'nu':
+            self.underlying = svm.NuSVR(kernel=self.kernel, **self.kwargs)
         else:
-            self.model = self.underlying
-        self.model.fit(self.x_train, self.y_train)
-        return self.model
+            raise NotImplementedError('Type not implemented. Choies are eps or nu.')
+        if self.cv_folds is not None:
+            model = grid_search.GridSearchCV(self.underlying, self.parameters, cv=self.cv_folds, scoring=self.score)
+        else:
+            model = self.underlying
+        model.fit(self.x_train, self.y_train)
+        return model
 
     def _estimate_coefficients(self):
         if self.kernel=='linear':
