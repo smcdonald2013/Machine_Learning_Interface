@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from sklearn import linear_model, learning_curve
+from sklearn import linear_model
 from cycler import cycler
 import matplotlib.pyplot as plt
 import abc
@@ -14,17 +14,6 @@ class RegularizedRegression(Regression):
     Do not create instances of this class for modeling!
     Use derived classes. Note that all derived classes should
     contain the attributes listed.
-
-    Parameters
-    ----------
-    intercept : boolean
-        Whether to fit an intercept to the model.
-    scale : boolean
-        Whether to scale the data so each variable has mean=0 and variance=1
-    cv_folds : int
-        Number of folds for cross validation. If None, no cross-validation is performed. 
-    **kwargs : varies
-        Keyword arguments to be passed to cross-validation function. Only appropriate if cv_folds is not None
 
     Attributes
     ----------
@@ -47,7 +36,7 @@ class RegularizedRegression(Regression):
         self.kwargs         = kwargs
 
     def diagnostics(self):
-        """Regularized regression diagnostics."""
+        """Regularized regression diagnostics. Includes validation curve, learning curve, and regularization plot."""
         super(RegularizedRegression, self).diagnostics() 
         #self.alphas = np.logspace(-10, 5, 100)
         self.coefs  = self._estimate_coefficients()
@@ -191,8 +180,8 @@ class RidgeRegression(RegularizedRegression):
 
         Returns
         -------
-        model : sklearn lasso regression or lasso cv object
-            Fitted lasso model.
+        model : sklearn ridge regression or ridge cv object
+            Fitted ridge model.
         """
         self.underlying = linear_model.Ridge(fit_intercept=self.intercept)
         if (self.cv_folds is not None) or (self.solver in ['svd', 'eigen']): 
@@ -216,7 +205,7 @@ class ElasticNetRegression(RegularizedRegression):
     """Fits Elastic Net Regression using sklearn implementation."""
 
     def _estimate_model(self):
-        """Estimates ridge regression model.
+        """Estimates elastic net regression model.
 
         Returns
         -------

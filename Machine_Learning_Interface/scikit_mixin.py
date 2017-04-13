@@ -37,7 +37,7 @@ def learning_curve_plot(estimator, title, X, y, cv=5, scoring='mean_squared_erro
     plt.figure()
     plt.title(title)
     plt.xlabel("Training examples")
-    plt.ylabel("Score")
+    plt.ylabel(scoring)
     train_sizes, train_scores, test_scores = model_selection.learning_curve(estimator, X, y, cv=cv, train_sizes=train_sizes, scoring=scoring, **kwargs)
     if scoring=='mean_squared_error':
         train_scores = -train_scores
@@ -53,7 +53,7 @@ def learning_curve_plot(estimator, title, X, y, cv=5, scoring='mean_squared_erro
 
     plt.fill_between(train_sizes, train_scores_mean - train_scores_std, train_scores_mean + train_scores_std, alpha=0.1, color="r")
     plt.fill_between(train_sizes, test_scores_mean - test_scores_std, test_scores_mean + test_scores_std, alpha=0.1, color="g")
-    plt.plot(train_sizes, train_scores_mean, 'o-', color="r", label=("Training " + scoring))
+    plt.plot(train_sizes, train_scores_mean, 'o-', color="r", label="Training score" )
     plt.plot(train_sizes, test_scores_mean, 'o-', color="g", label="Cross-validation score")
 
     plt.legend(loc="best")
@@ -75,7 +75,7 @@ def validation_plot(estimator, title, X, y, param_name, param_range, cv_param, c
     plt.figure()
     plt.title(title)
     plt.xlabel(param_name)
-    plt.ylabel('Score')
+    plt.ylabel(scoring)
     plt.ylim(.9*scores_min,1.1*scores_max)
     plt.plot(param_range, train_scores_mean, label="Training score", color="r")
     plt.fill_between(param_range, train_scores_mean - train_scores_std, train_scores_mean + train_scores_std, alpha=0.2, color="r")
