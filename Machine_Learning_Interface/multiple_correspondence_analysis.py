@@ -1,12 +1,12 @@
 import numpy as np
 import pandas as pd
-from sklearn import decomposition
+import mca
 from base_models import DimensionalityReduction
 import scikit_mixin
 import matplotlib.pyplot as plt
 
-class PCA(DimensionalityReduction):
-    """Class for dimensionality reduction by PCA.
+class MCA(DimensionalityReduction):
+    """Class for dimensionality reduction by MCA.
 
     Note that sklearn performs covariance PCA by default, setting scale=True will perform correlation PCA.
 
@@ -16,15 +16,13 @@ class PCA(DimensionalityReduction):
         Whether to fit an intercept to the model. Since PCA de-means the data, this parameter is ignored.
     scale : boolean
         Whether to scale the data so each variable has mean=0 and variance=1. False=covariance PCA, True=Correlation PCA.
-    kernel : boolean
-        The kernel to be used if kernel PCA is desired. Must be one of options implemented in sklearn.
     **kwargs : varies
         Keyword arguments to be passed to model fitting function. """
 
-    def __init__(self, intercept=False, scale=False, kernel=False, **kwargs):
+    def __init__(self, intercept=False, scale=False,  n_factors=None, **kwargs):
         self.intercept      = intercept
         self.scale          = scale
-        self.kernel         = kernel
+        self.n_factors      = n_factors
         self.kwargs         = kwargs
 
     def diagnostics(self):
@@ -32,14 +30,14 @@ class PCA(DimensionalityReduction):
 
         Generates a scree plot and a biplot of the first 2 principal components.
         """
-        super(PCA, self).diagnostics() 
-        self.scree_plot(self.evals)
-        scikit_mixin.biplot(self.x_train, self.evals, self.evecs, var_names=self.x_train.columns, var=self.kernel)
-        self.loading_matrix = pd.DataFrame(self.evecs, index=self.x_train.columns, columns=self.fittedvalues.columns)
+        super(MCA, self).diagnostics()
+        self.scree_plot(self.model.L)
+        self.biplot(pd.DataFrame(self.model.fs_r()), pd.DataFrame(self.model.fs_c()), var_names=self.x_train.columns, var=False)
+        self.loading_matrix = pd.DataFrame(self.model.fs_c(), index=self.x_train.columns, columns=self.fittedvalues.columns)
         print self.loading_matrix
 
     def transform(self, x_val):
-        """Transforms the provided data into factor scores using the principal components.
+        """Transforms the provided data into factor scores using MCA.
 
         Parameters
         ----------
@@ -49,11 +47,11 @@ class PCA(DimensionalityReduction):
         Returns
         -------
         val_df : pd.DataFrame(n_samples, n_factors)
-            Factor scores of the data.
+            (Row) Factor scores of the data.
         """
-        super(PCA, self).transform(x_val) #dot(x, evecs) transforms data
-        val_pred = self.model.transform(self.x_val)
-        n_factors = self.model.n_components if self.model.n_components is not None else self.x_val.shape[1]
+        super(MCA, self).transform(x_val)
+        val_pred = self.model.fs_r(N=self.n_factors)
+        n_factors = val_pred.shape[1]
         factor_str = ['Factor']*n_factors
         factor_nums = np.linspace(1, n_factors, n_factors)
         factor_columns = ["%s%02d" % t for t in zip(factor_str, factor_nums)]
@@ -87,27 +85,18 @@ class PCA(DimensionalityReduction):
         return data
 
     def _estimate_model(self):
-        """Fits PCA to input data.
+        """Fits MCA to input data.
 
         Returns
         -------
         model : sklearn PCA object
             Fitted PCA model object.
         """
-        if self.kernel:
-            model = decomposition.KernelPCA(**self.kwargs)
-            model.fit(self.x_train)
-            self.evecs = model.alphas_
-            self.evals = model.lambdas_        
-        else: 
-            model = decomposition.PCA(**self.kwargs)
-            model.fit(self.x_train)
-            self.evecs = model.components_.T #dot(evecs, x) gives transformed data
-            self.evals = model.explained_variance_
+        model = mca.mca(self.x_train, **self.kwargs)
         return model
 
     def scree_plot(self, evals):
-        """Plots scree plot- proportion of variance explained by each principal component.
+        """Plots scree plot- proportion of variance explained by each factor.
 
         Parameters
         ----------
@@ -125,26 +114,28 @@ class PCA(DimensionalityReduction):
         plt.plot(ex_var, linewidth=2)
         plt.title('Scree Plot')
         plt.axis('tight')
-        plt.xlabel('Number of Components')
-        plt.ylabel('Proportion of Variance')
+        plt.xlabel('Number of Factors')
+        plt.ylabel('Proportion of Inertia')
         return plt
 
-    def Eigendecomposition(self, n_components=1): #Correlation approach
-        """Deprecated."""
-        self.n_factors = n_components
-        x_stand = (self.x_train - np.mean(self.x_train, axis=0))/np.std(self.x_train, axis=0)
-        U, S, V = np.linalg.svd(x_stand, full_matrices=True)
+    def biplot(self, fs_r, fs_c, var_names=None, var=True, xpc=1, ypc=2):
 
-        eigenvalues = S**2/(self.x_train.shape[0])
-        eigenvectors = V.T
+        xpc, ypc = (xpc - 1, ypc - 1)
 
-        if any(x <= 0 for x in eigenvalues[:self.n_factors]): #Checking that there are enough positive eigenvalues
-            raise ValueError('There are not enough positive eigenvalues for the number of factors you selected.') 
+        xs = fs_r.ix[:, xpc]
+        ys = fs_r.ix[:, ypc]
 
-        loading_matrix = eigenvectors[:,:self.n_factors]
-        factor_str = ['Component']*self.n_factors
-        factor_nums = np.linspace(1, self.n_factors, self.n_factors)
-        factor_columns = ["%s%02d" % t for t in zip(factor_str, factor_nums)]
-        loading_matrix_df = pd.DataFrame(loading_matrix, index=self.x_train.columns, columns=factor_columns)
+        plt.figure()
+        plt.title('Biplot')
+        plt.scatter(xs, ys, c='k', marker='.')
 
-        return eigenvalues, loading_matrix_df
+        if var is False:
+            tvars = fs_c
+
+            for i, col in enumerate(var_names):
+                x, y = tvars.ix[i, xpc], tvars.ix[i, ypc]
+                plt.arrow(0, 0, x, y, color='r', width=0.002, head_width=0.05)
+                plt.text(x * 1.4, y * 1.4, col, color='r', ha='center', va='center')
+        plt.xlabel('Factor{}'.format(xpc + 1))
+        plt.ylabel('Factor{}'.format(ypc + 1))
+        return plt
