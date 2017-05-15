@@ -11,6 +11,8 @@ from base_models import Regression
 import scikit_mixin
 from sklearn import metrics
 from scipy import signal
+import calendar
+import itertools
 
 class ARMARegression(Regression):
 
@@ -23,7 +25,6 @@ class ARMARegression(Regression):
         self.kwargs         = kwargs
 
     def _estimate_model(self):
-        ###Lars Algorithm
         if self.select:
             info_criterion = sm.tsa.arma_order_select_ic(self.x_train, ic=['aic', 'bic'], trend='nc')
             aic_ind = info_criterion['aic_min_order']
@@ -137,22 +138,61 @@ class ARMARegression(Regression):
 
     def periodigram(self, residuals):
         f, Pxx_den = signal.periodogram(residuals)
+        max_idx = np.argsort(Pxx_den)[-1]
+        max_freq = f[max_idx]
         plt.figure()
         plt.semilogy(f, Pxx_den)
         plt.xlabel('frequency [Hz]')
         plt.ylabel('PSD [V**2/Hz]')
+        plt.axvline(max_freq, linestyle='--', color='k', label='Frequency With Max Power: ' + "{0:.3f}".format(max_freq))
+        plt.legend(loc='best')
         plt.show()
-        return plt
+        return max_freq, plt
 
-    def fixed_seasonality_test(self, dummies=['D', 'W', 'M', 'Y']):
-        return 0
+    def freq_choice(self,  index, freq):
+        if freq == 'Y':
+            date_categorical = index.year
+        elif freq == 'M':
+            # date_categorical = index.month
+            month_dict = {v: k for v, k in enumerate(calendar.month_abbr)}
+            date_categorical = pd.DataFrame(index.month).replace(month_dict).values.flatten()
+        elif freq == 'W':
+            date_categorical = index.week
+        elif freq == 'D':
+            # date_categorical = index.dayofweek
+            day_dict = {v: k for v, k in enumerate(calendar.day_abbr)}
+            date_categorical = pd.DataFrame(index.dayofweek).replace(day_dict).values.flatten()
+        return date_categorical
 
-    def dummy(self, x_data):
-        dummies = pd.get_dummies(x_data.index.week, prefix='Hello_', drop_first=True)
+    def dummy(self, x_data, freq='M'):
+        date_categorical = self.freq_choice(x_data.index, freq)
+        dummies = pd.get_dummies(date_categorical, prefix='TimeDummy_', drop_first=True)
         dummies_df = pd.DataFrame(dummies.values, index=x_data.index, columns=dummies.columns)
         temp = x_data
-        pd.concat([temp,dummies_df], axis=1)
+        final = pd.concat([temp, dummies_df], axis=1)
+        return final
 
+    def harmonic_terms(self, x_data, period, n_k=1):
+        freq = 1.0/period
+        nrows = x_data.shape[0]
+        ncols = n_k * 2
+        time = pd.Series(range(nrows))
+        dta_array = np.empty(shape=[nrows, ncols])
+        for k in range(1, n_k + 1):
+            sin_dta = np.sin(2 * np.pi * k * freq * time)
+            cos_dta = np.cos(2 * np.pi * k * freq * time)  # freq = 1/4 (period=4 years)
+            #harmonics = np.vstack((sin_dta, cos_dta)).T
+            dta_array[:, 2 * (k - 1)] = sin_dta
+            dta_array[:, 2 * k - 1] = cos_dta
+        sin_str = ['Sin'] * n_k
+        cos_str = ['Cos'] * n_k
+        factor_nums = np.linspace(1, n_k, n_k)
+        sin_columns = ["%s%02d" % t for t in zip(sin_str, factor_nums)]
+        cos_columns = ["%s%02d" % t for t in zip(cos_str, factor_nums)]
+        iters = [iter(sin_columns), iter(cos_columns)]
+        harmonics_cols =  list(it.next() for it in itertools.cycle(iters))
+        dta_df = pd.DataFrame(index=x_data.index, data=dta_array, columns=harmonics_cols)
+        return dta_df
 
 def walk_forward_validation(model, x, y, initial_train, forecast_horizon, walk_forward_period, rolling=True):
 
