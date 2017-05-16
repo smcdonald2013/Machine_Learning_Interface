@@ -15,16 +15,38 @@ import calendar
 import itertools
 
 class ARMARegression(Regression):
+    """Class for ARMA Regression with capability for harmonic regression and detrending.
 
-    def __init__(self, intercept=False, scale=False, select=True, order=None, cv_folds=None,**kwargs):
+    Parameters
+    ----------
+    intercept : boolean
+        Whether to fit an intercept to the model.
+    scale : boolean
+        Whether to scale the data so each variable has mean=0 and variance=1.
+    select : boolean
+        Whether to select the order using AIC/BIC.
+    order : tuple (int, int)
+        Order of the AR and MA terms. If select=True this should be None.
+    kernel : boolean
+        The kernel to be used if kernel PCA is desired. Must be one of options implemented in sklearn.
+    **kwargs : varies
+        Keyword arguments to be passed to model fitting function. """
+
+    def __init__(self, intercept=False, scale=False, select=True, order=None, **kwargs):
         self.intercept      = intercept
         self.scale          = scale
         self.select         = select
         self.order          = order
-        self.cv_folds       = cv_folds
         self.kwargs         = kwargs
 
     def _estimate_model(self):
+        """Estimates the ARMA regression.
+
+        Returns
+        -------
+        model : statsmodels ARMA model object
+            Fitted ARMA model.
+        """
         if self.select:
             info_criterion = sm.tsa.arma_order_select_ic(self.x_train, ic=['aic', 'bic'], trend='nc')
             aic_ind = info_criterion['aic_min_order']
@@ -39,14 +61,30 @@ class ARMARegression(Regression):
         self.y_train = self.y_train[self.k_ar:]
         return model
 
-    def eda(self):
-        self.series_plot(self.x_train)
-        self.acf_plot(self.x_train)
-        self.pacf_plot(self.x_train)
-        print self.adf(self.x_train.iloc[:,0])
-        self.periodigram(self.y_train)
+    def eda(self, x_data):
+        """Performs Exploratory Data Analysis for Time Series Models.
+
+        Parameters
+        ----------
+        x_data : pd.DataFrame
+            Input dataframe. Should be 1 column df.
+        """
+        self.series_plot(x_data)
+        self.acf_plot(x_data)
+        self.pacf_plot(x_data)
+        print(self.adf(x_data.iloc[:,0]))
+        self.periodigram(x_data.iloc[:,0])
 
     def diagnostics(self):
+        """Performs diagnostic tests/plots after model fitting.
+
+        Includes residual plot over time, ACF/PACF, ADF test results, and output df.
+
+        Returns
+        ----------
+        output_df : pd.DataFrame
+            Results for various diagnostics tests.
+        """
         super(ARMARegression, self).diagnostics() 
         self.residual_time_plot(self.fittedvalues)
         self.acf_plot(self.fittedvalues)
@@ -58,14 +96,46 @@ class ARMARegression(Regression):
         #sm.graphics.tsa.plot_acf(self.fittedvalues.values.squeeze(), lags=40)
         #sm.graphics.tsa.plot_pacf(self.fittedvalues, lags=40, ax=ax2)
 
-    def differencing(self, diff):
+    def differencing(self, diff, x_data=None):
+        """Performs differencing on the x_data.
+
+        Note that this changes the model's saved x_data.
+
+        Parameters
+        ----------
+        diff : int
+            Number of differences to take
+
+        Returns
+        -------
+        x_train : pd.DataFrame
+            Differenced dataset.
+        """
         self.diff = diff
-        self.x_original = self.x_train
-        self.x_train = self.x_train.diff(diff).dropna()
-        self.y_train = self.y_train.diff(diff).dropna()
-        return self.x_train
+        if hasattr(self, 'x_train'):
+            self.x_original = self.x_train
+            self.x_train = self.x_train.diff(diff).dropna()
+            self.y_train = self.y_train.diff(diff).dropna()
+            diff_data = self.x_train
+        else:
+            diff_data = x_data.diff(diff).dropna()
+        return diff_data
 
     def adf(self, residuals, options = ['nc', 'c', 'ct', 'ctt']):
+        """
+
+        Parameters
+        ----------
+        residuals : pd.DataFrame
+            Dataframe containing the residuals of the model.
+        options : list
+            Which ADF tests to perform. Options are nc, c, ct, ctt.
+
+        Returns
+        -------
+        adf_df : pd.DataFrame
+            Results of ADF tests.
+        """
         adf_dict = {}
         for x in options:
             adf_dict[x] = stattools.adfuller(residuals, maxlag=None, regression=x, autolag='AIC')[1]
@@ -91,7 +161,28 @@ class ARMARegression(Regression):
         fitted_values = self.predict(self.x_train, start=None, end=None, dynamic=False)[self.k_ar:]
         return fitted_values
 
+    def eda_regression(self, y_data, x_data, intercept=True):
+        if intercept:
+            x_data = sm.add_constant(x_data, prepend=False)
+        mod = sm.OLS(y_data, x_data)
+        res = mod.fit()
+        print(res.summary())
+        residuals_df = pd.DataFrame(res.resid, columns=[y_data.name])
+        return res, residuals_df
+
     def _add_intercept(self, data):
+        """Overrides base intercept function, just returning data unchanged since sklearn handles intercept internally.
+
+        Parameters
+        ----------
+        data : pd.DataFrame (n_samples, n_features)
+            Training data.
+
+        Returns
+        -------
+        data : pd.DataFrame (n_samples, n_features)
+            Training data, unchanged.
+        """
         return data
 
     def series_plot(self, series):
@@ -168,9 +259,10 @@ class ARMARegression(Regression):
         date_categorical = self.freq_choice(x_data.index, freq)
         dummies = pd.get_dummies(date_categorical, prefix='TimeDummy_', drop_first=True)
         dummies_df = pd.DataFrame(dummies.values, index=x_data.index, columns=dummies.columns)
-        temp = x_data
-        final = pd.concat([temp, dummies_df], axis=1)
-        return final
+        #temp = x_data
+        #final = pd.concat([temp, dummies_df], axis=1)
+        #return final
+        return dummies_df
 
     def harmonic_terms(self, x_data, period, n_k=1):
         freq = 1.0/period
