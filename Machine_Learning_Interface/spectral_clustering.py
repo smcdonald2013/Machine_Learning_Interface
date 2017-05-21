@@ -104,11 +104,11 @@ class SpectralClustering(DimensionalityReduction):
         if self.type == 'unnormalized':
             output = self.unnormalized_laplacian(adj_mat, self.n_clusters)
         elif self.type == 'random_walk':
-            output == self.random_walk_laplacian(adj_mat, self.n_clusters)
+            output = self.random_walk_laplacian(adj_mat, self.n_clusters)
         elif self.type == 'symmetric':
             output = self.symmetric_laplacian(adj_mat, self.n_clusters)
         self.laplacian, self.evals, self.evecs, self.model = output
-        self.labels = self.model.labels
+        self.labels = self.model.labels_
         self.centers = self.model.centers
         return self.model
 
