@@ -255,7 +255,7 @@ class Classification(Model):
         self.accuracy                                 = self._estimate_accuracy()
         scikit_mixin.confusion_matrix_plot(self.y_train, self.fittedvalues)
         scikit_mixin.roc_curve_plot(self.y_train, self.fittedvalues)
-        print sk.metrics.classification_report(self.y_train, self.fittedvalues)
+        print(sk.metrics.classification_report(self.y_train, self.fittedvalues))
 
     @abc.abstractmethod
     def predict(self, x_val): 
@@ -295,19 +295,19 @@ class DimensionalityReduction(object):
 
     Attributes
     ----------
-    self.scale : boolean
+    scale : boolean
         Whether the data has been scaled to have mean=0 and variance=1
-    self.x_train : pd.DataFrame, shape (n_samples, n_features)
+    x_train : pd.DataFrame, shape (n_samples, n_features)
         Dataframe containing the x data, after it has gone through any preprocessing
-    self.y_train : pd.DataFrame, shape (n_samples, 1)
+    y_train : pd.DataFrame, shape (n_samples, 1)
         Dataframe containing the y data.  
-    self.number_obs : int
+    number_obs : int
         Number of observations
-    self.number_feat : int
+    number_feat : int
         Number of features
-    self.model : varies
+    model : varies
         Underlying fitted model. View documentation of derived classes for information
-    self.fittedvalues : pd.Series, shape (n_samples, )
+    fittedvalues : pd.Series, shape (n_samples, )
         Fitted values of the model
     """
 
