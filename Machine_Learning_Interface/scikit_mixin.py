@@ -8,10 +8,11 @@ import itertools
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (brier_score_loss, precision_score, recall_score, f1_score)
 from sklearn.calibration import CalibratedClassifierCV, calibration_curve
+import matplotlib.cm as cm
+from sklearn.metrics import silhouette_samples, silhouette_score
 
 def learning_curve_plot(estimator, title, X, y, cv=5, scoring='mean_squared_error', train_sizes=np.linspace(.1, 1.0, 5), **kwargs):
-    """
-    Generate a simple plot of the test and traning learning curve.
+    """Generate a simple plot of the test and traning learning curve.
 
     Parameters
     ----------
@@ -98,14 +99,27 @@ def qq_plot(residuals):
     return fig
 
 def roc_curve_plot(trueclasses, fittedvalues):
-    # Compute ROC curve and ROC area
+    """Generate ROC curve.
+
+    Parameters
+    ----------
+    trueclasses : pd.Series
+        True classes.
+
+    fittedvalues : pd.Series
+        Estimated classes (must be discrete, corresponding to class labels, not probabilities)
+
+    Returns
+    -------
+    plt : Matplotlib figure object.
+        ROC plot.
+    """
     fpr, tpr, _ = roc_curve(trueclasses, fittedvalues)
     roc_auc     = auc(fpr, tpr)
 
     plt.figure()
     lw = 2
-    plt.plot(fpr, tpr, color='darkorange',
-             lw=lw, label='ROC curve (area = %0.2f)' % roc_auc)
+    plt.plot(fpr, tpr, color='darkorange', lw=lw, label='ROC curve (area = %0.2f)' % roc_auc)
     plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])
@@ -115,15 +129,31 @@ def roc_curve_plot(trueclasses, fittedvalues):
     plt.legend(loc="lower right")
     return plt
 
-def confusion_matrix_plot(truevalues, fittedvalues,
-                          normalize=False,
-                          title='Confusion matrix',
-                          cmap=plt.cm.Blues):
-    """
-    This function prints and plots the confusion matrix.
-    Normalization can be applied by setting `normalize=True`.
-    """
+def confusion_matrix_plot(truevalues, fittedvalues, normalize=False, title='Confusion matrix', cmap=plt.cm.Blues):
+    """Generate confusion matrix table, for use in classification modeling diagnostics.
 
+    Parameters
+    ----------
+    truevalues : pd.Series
+        True classes.
+
+    fittedvalues : pd.Series
+        Estimated classes (must be discrete, corresponding to class labels, not probabilities)
+
+    normalize : boolean
+        Whether to normalize the confusion matrix (represent as percentages rather than counts)
+
+    title : str
+        Title to give the plot.
+
+    cmap : Matplotlib colormap
+        Colormap to use for table coloring.
+
+    Returns
+    -------
+    plt : Matplotlib figure object.
+        Confusion matrix table.
+    """
     cm = confusion_matrix(truevalues, fittedvalues)
     classes = set(truevalues.values)
     plt.figure()
@@ -142,9 +172,7 @@ def confusion_matrix_plot(truevalues, fittedvalues,
 
     thresh = cm.max() / 2.
     for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
-        plt.text(j, i, cm[i, j],
-                 horizontalalignment="center",
-                 color="white" if cm[i, j] > thresh else "black")
+        plt.text(j, i, cm[i, j], horizontalalignment="center", color="white" if cm[i, j] > thresh else "black")
 
     plt.tight_layout()
     plt.ylabel('True label')
@@ -152,7 +180,36 @@ def confusion_matrix_plot(truevalues, fittedvalues,
     return plt
 
 def biplot(pcs, evals, evecs, var_names=None, var=True, xpc=1, ypc=2):
+    """Biplot, for use in eigendecomposition/SVD techniques.
 
+    Parameters
+    ----------
+    pcs : pd.DataFrame
+        The data presented in principal component space.
+
+    evals : np.array
+        Eigenvalues
+
+    evecs : np.array
+        Eigenvectors
+
+    var_names : list
+        List of names of the variables.
+
+    var : boolean
+        Whether to plot the loading matrix weights for the original variables.
+
+    xpc : int
+        The index of the principal component to put on the x-axis.
+
+    ypc : int
+        The index of the principal component to put on the y-axis.
+
+    Returns
+    -------
+    plt : Matplotlib figure object.
+        Biplot.
+    """
     xpc, ypc = (xpc - 1, ypc - 1)
     singvals = np.sqrt(evals)
 
@@ -175,6 +232,23 @@ def biplot(pcs, evals, evecs, var_names=None, var=True, xpc=1, ypc=2):
     return plt 
 
 def plot_calibration_curve(est, name, X_train, y_train):
+    """Generate a plot fo the calibration curve, for use in classification modeling diagnostics.
+
+    Parameters
+    ----------
+    est : object type that implements the "fit" and "predict" methods
+        An object of that type which is cloned for each validation.
+
+    name : string
+        Name of the classifier, i.e. "Logistic Regression, SVC, etc".
+
+    X_train : array-like, shape (n_samples, n_features)
+        Training vector, where n_samples is the number of samples and
+        n_features is the number of features.
+
+    y_train : array-like, shape (n_samples) or (n_samples, n_features)
+        Target relative to X for classification.
+    """
     X_test = X_train
     y_test = y_train
     """Plot calibration curve for est w/o and with calibration. """
@@ -266,3 +340,98 @@ def class_plot(mod, X, y, y_pred):
     plt.ylabel(X.columns[1])
 
     return plt
+
+def plot_clusters(data, cluster_labels, cluster_centers, feat=(0,1)):
+    """Generate a plot of the estimated clusters along with centers (for kmeans).
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        Data used to fit the model.
+
+    cluster_labels : list
+        The labels assigned by the clustering model.
+
+    cluster_centers : pd.DataFrame
+        The centers of the estimated clusters.
+
+    feat : tuple
+        Tuple containing the indices of the data to plot.
+    """
+    feat_1, feat_2 = feat
+    n_clusters = cluster_centers.shape[0]
+    colors = cm.spectral(cluster_labels.astype(float) / n_clusters)
+    fig = plt.figure()
+    ax1 = fig.add_subplot(111)
+    ax1.set_title("Clusters on Space Spanned by Features")
+    ax1.set_xlabel("Feature %s" % data.columns[feat_1])
+    ax1.set_ylabel("Feature %s" % data.columns[feat_2])
+    ax1.scatter(data.iloc[:, feat_1], data.iloc[:, feat_2], marker='.', s=30, lw=0, alpha=0.7, c=colors)
+    ax1.scatter(cluster_centers.iloc[:, feat_1], cluster_centers.iloc[:, feat_2], marker='o', c="white", s=200, alpha=1)
+    #colors = cm.spectral(np.unique(cluster_labels).astype(float) / n_clusters)
+    for i, c in enumerate(cluster_centers.values):
+        #ax1.scatter(c[0], c[1], marker='$%d$', % i, alpha=1, s=50, c=colors[i,:])
+        ax1.scatter(c[0], c[1], marker='$%d$' % i, alpha=1, s=50)
+    plt.show()
+
+def plot_silhouette(data, cluster_labels):
+    """Creates silhouette plot of clusters, to help determine if correct k was chosen.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        Original data used to train model.
+
+    cluster_labels : np.array
+        Array of estimated labels.
+    """
+    n_clusters = len(np.unique(cluster_labels))
+    # Create a subplot with 1 row and 2 columns
+    fig, ax1 = plt.subplots(1, 1)
+    fig.set_size_inches(10, 5)
+
+    ax1.set_xlim([-1, 1])
+    # The (n_clusters+1)*10 is for inserting blank space between silhouette
+    # plots of individual clusters, to demarcate them clearly.
+    ax1.set_ylim([0, len(data) + (n_clusters + 1) * 10])
+
+    # The silhouette_score gives the average value for all the samples.
+    # This gives a perspective into the density and separation of the formed clusters
+    silhouette_avg = silhouette_score(data, cluster_labels)
+    print("For n_clusters =", n_clusters,
+          "The average silhouette_score is :", silhouette_avg)
+
+    # Compute the silhouette scores for each sample
+    sample_silhouette_values = silhouette_samples(data, cluster_labels)
+
+    y_lower = 10
+    for i in range(n_clusters):
+        # Aggregate the silhouette scores for samples belonging to cluster i, and sort them
+        ith_cluster_silhouette_values = \
+            sample_silhouette_values[cluster_labels == i]
+
+        ith_cluster_silhouette_values.sort()
+
+        size_cluster_i = ith_cluster_silhouette_values.shape[0]
+        y_upper = y_lower + size_cluster_i
+
+        color = cm.spectral(float(i) / n_clusters)
+        ax1.fill_betweenx(np.arange(y_lower, y_upper), 0, ith_cluster_silhouette_values, facecolor=color, edgecolor=color, alpha=0.7)
+
+        # Label the silhouette plots with their cluster numbers at the middle
+        ax1.text(-0.05, y_lower + 0.5 * size_cluster_i, str(i))
+
+        # Compute the new y_lower for next plot
+        y_lower = y_upper + 10  # 10 for the 0 samples
+
+    ax1.set_title("The silhouette plot for the various clusters.")
+    ax1.set_xlabel("The silhouette coefficient values")
+    ax1.set_ylabel("Cluster label")
+
+    # The vertical line for average silhouette score of all the values
+    ax1.axvline(x=silhouette_avg, color="red", linestyle="--")
+
+    ax1.set_yticks([])  # Clear the yaxis labels / ticks
+    ax1.set_xticks([-1.0, -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1])
+
+    plt.show()
