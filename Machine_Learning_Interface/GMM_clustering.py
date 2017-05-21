@@ -1,13 +1,15 @@
 import numpy as np
 import pandas as pd
+from scipy import linalg
 from base_models import DimensionalityReduction
 import scikit_mixin
-from sklearn import cluster
-from scipy import linalg
+from sklearn import mixture
 import matplotlib.pyplot as plt
+import itertools
+import matplotlib as mpl
 
-class DBSCAN(DimensionalityReduction):
-    """Clustering using DBSCAN.
+class GMM(DimensionalityReduction):
+    """Clustering using Gaussian Mixture ModelsN.
 
     Parameters
     ----------
@@ -24,73 +26,69 @@ class DBSCAN(DimensionalityReduction):
         self.kwargs         = kwargs
 
     def _estimate_model(self):
-        """Fits DBSCAN to input data.
+        """Fits GMM to input data.
 
         Returns
         -------
-        model : sklearn DBSCAN object
-            Fitted DBSCAN model object.
+        model : sklearn GMM object
+            Fitted GMM object.
         """
-        if type(self.x_train) == pd.core.sparse.frame.SparseDataFrame:
-            adj_mat = self.x_train.to_coo()
-        elif type(self.x_train) == pd.core.frame.DataFrame:
-            adj_mat = self.x_train.values
-
-        model = cluster.DBSCAN(**self.kwargs)
+        model = mixture.GaussianMixture(**self.kwargs)
         model.fit(self.x_train)
-        self.labels = model.labels_
+        self.labels = model.predict(self.x_train)
         return model
 
-    def diagnostics(self, unscaled=False):
-        """Diagnostics for DBSCAN.
+    def diagnostics(self):
+        """Diagnostics for GMM.
 
         Generates a silhouette plot and a biplot of the clusters on the first 2 features.
         """
-        super(DBSCAN, self).diagnostics()
-        self.output_plot(self.x_train, self.labels, self.model.core_sample_indices_)
+        super(GMM, self).diagnostics()
+        self.plot_results(self.x_train, self.labels, self.model.means_, self.model.covariances_)
         scikit_mixin.plot_silhouette(data=self.x_train, cluster_labels=self.labels)
 
-    def output_plot(data, cluster_labels, core_samples, feat=(0, 1)):
-        """Plots the clustering on space spanned by 2 features, distinguishing between core, non-core, and noisy samples.
+    def plot_results(X, data, labels, means, covariances, feat=(0,1)):
+        """Plots the data with labels assigned and ellipses for cluster mean/covariance.
 
         Parameters
         ----------
         data : pd.DataFrame
-            Data used to fit the model.
-        cluster_labels : list
-            The labels assigned by the clustering model.
-        core_samples : pd.DataFrame
-            Indices of points corresponding to core samples
+            Input data used for model fitting.
+        labels : np.array
+            Labels assigned to data.
+        means : np.array
+            Estimated means of the data.
+        covariances : np.array
+            Estimated covariance of the data.
         feat : tuple (int, int)
             Tuple containing the indices of the data to plot.
         """
+        color_iter = itertools.cycle(['navy', 'c', 'cornflowerblue', 'gold', 'darkorange'])
         feat_1, feat_2 = feat
-        unique_labels = set(cluster_labels)
-        n_clusters_ = len(unique_labels) - (1 if -1 in unique_labels else 0) #Noise is not a cluster
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        for i, (mean, covar, color) in enumerate(zip(means, covariances, color_iter)):
+            v, w = linalg.eigh(covar)
+            v = 2. * np.sqrt(2.) * np.sqrt(v)
+            u = w[0] / linalg.norm(w[0])
 
-        colors = plt.cm.spectral(np.linspace(0, 1, len(unique_labels)))
-        core_samples_mask = np.zeros_like(cluster_labels, dtype=bool)
-        core_samples_mask[core_samples] = True
+            if not np.any(labels == i): #If there aren't any points corresponding to label, skip.
+                continue
+            plt.scatter(data.iloc[labels == i, feat_1], data.iloc[labels == i, feat_2], .8, color=color)
 
-        for k, col in zip(unique_labels, colors):
-            if k == -1:
-                col = 'k' #Black used for noise
+            # Plot an ellipse to show the Gaussian component
+            angle = np.arctan(u[1] / u[0])
+            angle = 180. * angle / np.pi  # convert to degrees
+            ell = mpl.patches.Ellipse(mean, v[0], v[1], 180. + angle, color=color)
+            ell.set_clip_box(ax.bbox)
+            ell.set_alpha(0.5)
+            ax.add_artist(ell)
 
-            class_member_mask = (cluster_labels == k)
-
-            xy = data.iloc[class_member_mask & core_samples_mask]
-            plt.plot(xy.iloc[:, feat_1], xy.iloc[:, feat_2], 'o', markerfacecolor=col, markeredgecolor='k', markersize=14)
-
-            xy = data.iloc[class_member_mask & ~core_samples_mask]
-            plt.plot(xy.iloc[:, feat_1], xy.iloc[:, feat_2], 'o', markerfacecolor=col, markeredgecolor='k', markersize=6)
-
-        plt.title('Estimated Number of Clusters %d' % n_clusters_)
-        plt.xlabel("Feature %s" % data.columns[feat_1])
-        plt.ylabel("Feature %s" % data.columns[feat_2])
+        plt.title('Gaussian Mixture Model')
         plt.show()
 
     def transform(self, x_val):
-        """This is probably irrelevant for DBSCAN.
+        """This is probably irrelevant for GMM.
 
         Parameters
         ----------
@@ -102,7 +100,7 @@ class DBSCAN(DimensionalityReduction):
         val_df : pd.DataFrame(n_samples, n_factors)
             Factor scores of the data.
         """
-        super(DBSCAN, self).transform(x_val)
+        super(GMM, self).transform(x_val)
         val_pred = self.model.transform(self.x_val)
         n_clusters = self.model.n_clusters
         cluster_str = ['Cluster']*n_clusters
@@ -112,7 +110,7 @@ class DBSCAN(DimensionalityReduction):
         return val_df
 
     def _estimate_fittedvalues(self):
-        """Simple returns the labels, since DBSCAN doesn't transform data.
+        """Simple returns the labels, since GMM doesn't transform data.
 
         Returns
         -------
