@@ -341,6 +341,18 @@ def class_plot(mod, X, y, y_pred):
 
     return plt
 
+def plot_classes(data, class_labels, feat=(0,1), title="Classes on Space Spanned by Features"):
+    feat_1, feat_2 = feat
+    n_clusters = class_labels.unique().shape[0]
+    colors = cm.spectral(class_labels.astype(float) / n_clusters)
+    fig = plt.figure()
+    ax1 = fig.add_subplot(111)
+    ax1.set_title(title)
+    ax1.set_xlabel("Feature %s" % data.columns[feat_1])
+    ax1.set_ylabel("Feature %s" % data.columns[feat_2])
+    ax1.scatter(data.iloc[:, feat_1], data.iloc[:, feat_2], marker='.', s=30, lw=0, alpha=0.7, c=colors)
+    plt.show()
+
 def plot_clusters(data, cluster_labels, cluster_centers, feat=(0,1)):
     """Generate a plot of the estimated clusters along with centers (for kmeans).
 

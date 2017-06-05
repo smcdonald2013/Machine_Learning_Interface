@@ -255,6 +255,8 @@ class Classification(Model):
         self.accuracy                                 = self._estimate_accuracy()
         scikit_mixin.confusion_matrix_plot(self.y_train, self.fittedvalues)
         scikit_mixin.roc_curve_plot(self.y_train, self.fittedvalues)
+        scikit_mixin.plot_classes(self.x_train, self.fittedvalues, title="Predicted Classes on Space Spanned by Features")
+        scikit_mixin.plot_classes(self.x_train, self.y_train, title="Actual Classes on Space Spanned by Features")
         print(sk.metrics.classification_report(self.y_train, self.fittedvalues))
 
     @abc.abstractmethod
