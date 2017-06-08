@@ -1,5 +1,6 @@
 import theano
 theano.config.gcc.cxxflags='-march=core2'
+theano.config.gcc="C:\TDM-GCC-64\bin\\g++.exe"
 import pymc3
 import scipy
 import collections

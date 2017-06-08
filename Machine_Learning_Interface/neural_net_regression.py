@@ -1,5 +1,5 @@
-import theano
-theano.config.gcc.cxxflags='-march=core2'
+#import theano
+#theano.config.gcc.cxxflags='-march=core2'
 import pandas as pd
 import keras
 import abc

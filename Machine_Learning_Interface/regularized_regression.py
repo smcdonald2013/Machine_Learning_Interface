@@ -40,7 +40,7 @@ class RegularizedRegression(Regression):
         super(RegularizedRegression, self).diagnostics() 
         #self.alphas = np.logspace(-10, 5, 100)
         self.coefs  = self._estimate_coefficients()
-        print self.coefs
+        print(self.coefs)
         if self.cv_folds is not None:
             self.alphas = self.model.alphas
             self._gen_cv_paths(self.alphas)
