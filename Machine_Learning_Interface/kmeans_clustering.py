@@ -38,9 +38,10 @@ class KMeans(DimensionalityReduction):
         cluster_columns = ["%s%02d" % t for t in zip(cluster_str, cluster_nums)]
         self.centers = pd.DataFrame(model.cluster_centers_, index=cluster_columns, columns=self.x_train.columns)
         self.labels = model.labels_
+        self.n_clusters = n_clusters
         return model
 
-    def diagnostics(self, unscaled=False):
+    def diagnostics(self, unscaled=True):
         """Diagnositcs for KMeans.
 
         Parameters

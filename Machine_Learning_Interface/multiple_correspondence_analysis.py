@@ -34,7 +34,7 @@ class MCA(DimensionalityReduction):
         self.scree_plot(self.model.L)
         self.biplot(pd.DataFrame(self.model.fs_r()), pd.DataFrame(self.model.fs_c()), var_names=self.x_train.columns, var=False)
         self.loading_matrix = pd.DataFrame(self.model.fs_c(), index=self.x_train.columns, columns=self.fittedvalues.columns)
-        print self.loading_matrix
+        print(self.loading_matrix)
 
     def transform(self, x_val):
         """Transforms the provided data into factor scores using MCA.

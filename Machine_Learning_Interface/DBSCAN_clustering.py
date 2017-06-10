@@ -50,7 +50,7 @@ class DBSCAN(DimensionalityReduction):
         self.output_plot(self.x_train, self.labels, self.model.core_sample_indices_)
         scikit_mixin.plot_silhouette(data=self.x_train, cluster_labels=self.labels)
 
-    def output_plot(data, cluster_labels, core_samples, feat=(0, 1)):
+    def output_plot(self, data, cluster_labels, core_samples, feat=(0, 1)):
         """Plots the clustering on space spanned by 2 features, distinguishing between core, non-core, and noisy samples.
 
         Parameters
@@ -68,7 +68,7 @@ class DBSCAN(DimensionalityReduction):
         unique_labels = set(cluster_labels)
         n_clusters_ = len(unique_labels) - (1 if -1 in unique_labels else 0) #Noise is not a cluster
 
-        colors = plt.cm.spectral(np.linspace(0, 1, len(unique_labels)))
+        colors = plt.cm.spectral(np.linspace(.1, .9, len(unique_labels)))
         core_samples_mask = np.zeros_like(cluster_labels, dtype=bool)
         core_samples_mask[core_samples] = True
 

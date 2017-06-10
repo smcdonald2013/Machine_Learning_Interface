@@ -36,7 +36,7 @@ class PCA(DimensionalityReduction):
         self.scree_plot(self.evals)
         scikit_mixin.biplot(self.x_train, self.evals, self.evecs, var_names=self.x_train.columns, var=self.kernel)
         self.loading_matrix = pd.DataFrame(self.evecs, index=self.x_train.columns, columns=self.fittedvalues.columns)
-        print self.loading_matrix
+        print(self.loading_matrix)
 
     def transform(self, x_val):
         """Transforms the provided data into factor scores using the principal components.

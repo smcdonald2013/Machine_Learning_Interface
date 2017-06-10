@@ -84,7 +84,7 @@ class SpectralClustering(DimensionalityReduction):
         return laplacian, evals,  evec_norm, model
 
     def kmeans(self, evecs, k):
-        model = kmeans_clustering.Kmeans(n_clusters=k)
+        model = kmeans_clustering.KMeans(n_clusters=k)
         model.fit(pd.DataFrame(evecs))
         return model
 
@@ -108,7 +108,7 @@ class SpectralClustering(DimensionalityReduction):
         elif self.type == 'symmetric':
             output = self.symmetric_laplacian(adj_mat, self.n_clusters)
         self.laplacian, self.evals, self.evecs, self.model = output
-        self.labels = self.model.labels_
+        self.labels = self.model.labels
         self.centers = self.model.centers
         return self.model
 
@@ -140,13 +140,13 @@ class SpectralClustering(DimensionalityReduction):
         fig = plt.figure()
         for i in range(1, evecs.shape[1]+1):
             ax1 = fig.add_subplot(2, 2, i)
-            ax1.set_title("Eigenvector $s" % i)
+            ax1.set_title("Eigenvector %s" % i)
             round_evecs = np.around(np.sort(evecs[:, i - 1]),5)
             ax1.plot(round_evecs)
         fig.subplots_adjust(hspace=.5)
         plt.show()
 
-    def diagnostics(self, unscaled=False):
+    def diagnostics(self):
         """Diagnostics for SpectralClustering.
 
         Generates a scree plot of evals and plot for evecs.
@@ -171,7 +171,7 @@ class SpectralClustering(DimensionalityReduction):
         """
         super(SpectralClustering, self).transform(x_val)
         val_pred = self.evecs
-        n_clusters = self.model.n_clusters
+        n_clusters = self.n_clusters
         cluster_str = ['Evec']*n_clusters
         cluster_nums = np.linspace(1, n_clusters, n_clusters)
         cluster_columns = ["%s%02d" % t for t in zip(cluster_str, cluster_nums)]

@@ -89,7 +89,7 @@ class FactorAnalysis(DimensionalityReduction):
         Generates a scree plot and a biplot of the first 2 principal components.
         """
         super(FactorAnalysis, self).diagnostics()
-        print self.loading_matrix
+        print(self.loading_matrix)
         self.scree_plot(self.evals)
         scikit_mixin.biplot(self.x_train, self.evals, self.evecs, var_names=self.x_train.columns, var=False)
 
