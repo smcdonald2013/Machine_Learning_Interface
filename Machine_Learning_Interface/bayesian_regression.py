@@ -29,11 +29,11 @@ class BayesianRegression(Regression):
 
     Attributes
     ----------
-    self.intercept : boolean
+    intercept : boolean
         Whether an intercept was fit to the model. 
-    self.scale : boolean
+    scale : boolean
         Whether the data was scaled before fitting. 
-    self.niter : int        
+    niter : int
         Number of iterations used when fitting the model. 
     """
     def __init__(self, intercept=False, scale=False, niter=500, model_provided=None):

@@ -24,13 +24,13 @@ class KalmanRegression(Regression):
 
     Attributes
     ----------
-    self.intercept : boolean
+    intercept : boolean
         Whether to fit an intercept to the model.
-    self.scale : boolean
+    scale : boolean
         Whether to scale the data so each variable has mean=0 and variance=1
-    self.cv_folds : int        
+    cv_folds : int
         Number of folds for cross validation
-    self.coefs : pd.Series
+    coefs : pd.Series
         Fitted coefficients. Index is coefficient names. 
         Underlying fitted model. View documentation of derived classes for information
     """

@@ -18,17 +18,9 @@ class LogisticRegression(Classification):
     cv_folds : int
         Number of folds for cross validation. 
     penalized : boolean
-        Model to use if default linear Gaussian model is not desired. 
-
-    Attributes
-    ----------
-    self.intercept : boolean
-        Whether an intercept was fit to the model. 
-    self.scale : boolean
-        Whether the data was scaled before fitting. 
-    self.cv_folds : int
-        Number of folds for cross validation.  
-
+        Model to use if regularization should be applied.
+    prob : boolean
+        Whether to return class probabilities.
     """
     def __init__(self, intercept=False, scale=False, cv_folds=None, penalized=False, prob=False, **kwargs):
         self.intercept      = intercept
@@ -39,18 +31,34 @@ class LogisticRegression(Classification):
         self.kwargs         = kwargs
 
     def _estimate_model(self):
+        """Estimates logistic regression model.
+
+        Sklearn only implements regularized logistic regression, so if traditional logistic regression is desired, statsmodels is used.
+
+        Returns
+        -------
+        model : sklearn or statsmodels logistic regression object.
+            Fitted object.
+        """
         if self.penalized:
             if self.cv_folds is not None: 
-                self.model = sk.linear_model.LogisticRegressionCV(fit_intercept=self.intercept, cv=self.cv_folds, **self.kwargs)
+                model = sk.linear_model.LogisticRegressionCV(fit_intercept=self.intercept, cv=self.cv_folds, **self.kwargs)
             else:
-                self.model = sk.linear_model.LogisticRegression(fit_intercept=self.intercept, **self.kwargs)
-            self.model.fit(self.x_train, self.y_train)
+                model = sk.linear_model.LogisticRegression(fit_intercept=self.intercept, **self.kwargs)
+            model.fit(self.x_train, self.y_train)
         else: 
             self.underlying = sm.GLM(self.y_train, self.x_train, family=sm.families.Binomial())
-            self.model = self.underlying.fit()
-        return self.model
+            model = self.underlying.fit()
+        return model
 
     def _estimate_coefficients(self):
+        """Returns fitted coeficients. For logistic regression, these are the 'log odds'.
+
+        Returns
+        -------
+        coef_df : pd.Series
+            Coefficients of the model.
+        """
         if self.penalized:
             coef_array =  np.append(self.model.coef_,self.model.intercept_)
             coef_names = np.append(self.x_train.columns, 'intercept')
@@ -61,6 +69,13 @@ class LogisticRegression(Classification):
         return coef_df
 
     def _estimate_fittedvalues(self):
+        """Estimates fitted values
+
+        Returns
+        -------
+        yhat : pd.Series
+            Predicted values of x_data based on fitted model.
+        """
         if self.penalized:
             yhat = self.predict(self.x_train)
         else: 
@@ -70,6 +85,13 @@ class LogisticRegression(Classification):
         return yhat
     
     def _estimate_prob(self):
+        """Returns the probability of each class for the training data.
+
+        Returns
+        -------
+        prob_array : np.array (n_samples, n_classes)
+            Array of fitted probbilities.
+        """
         if self.penalized:
             prob_array = self.model.predict_proba(self.x_train)
         else: 
@@ -78,6 +100,18 @@ class LogisticRegression(Classification):
         return prob_array
 
     def _add_intercept(self, data):
+        """If statsmodels is used, intercept must be manually added. sklearn can handle intercept internally.
+
+        Parameters
+        ----------
+        data : np.array
+            Input data.
+
+        Returns
+        -------
+        data_int : np.array
+            Data with intercept added, if needed.
+        """
         if self.penalized:
             data_int = data
         else: 
@@ -85,10 +119,23 @@ class LogisticRegression(Classification):
         return data_int
 
     def diagnostics(self):
+        """Performs diagnostic including validation plot and learning curve plot. """
         super(LogisticRegression, self).diagnostics() 
         self.coefs  = self._estimate_coefficients()
 
     def predict(self, x_val):
+        """Prediction using fitted model.
+
+        Parameters
+        ----------
+        x_val : pd.DataFrame (n_samples, n_features)
+            X data for making predictions.
+
+        Returns
+        -------
+        val_df : pd.Series (n_samples, )
+            Predicted values.
+        """
         super(LogisticRegression, self).predict(x_val) 
         if self.penalized:
             val_pred = self.model.predict(self.x_val)
