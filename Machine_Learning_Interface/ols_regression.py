@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd 
-from base_models import Regression
+from .base_models import Regression
 from sklearn import linear_model
 
 class OLSRegression(Regression):
