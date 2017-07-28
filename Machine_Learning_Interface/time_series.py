@@ -89,8 +89,8 @@ class ARMARegression(Regression):
         self.residual_time_plot(self.fittedvalues)
         self.acf_plot(self.fittedvalues)
         self.pacf_plot(self.fittedvalues)
-        print self.adf(self.y_train)
-        print self.model.params
+        print(self.adf(self.y_train))
+        print(self.model.params)
         return self.output_df(self.fittedvalues)
         #qqplot(self.fittedvalues, line='q', fit=True)
         #sm.graphics.tsa.plot_acf(self.fittedvalues.values.squeeze(), lags=40)
