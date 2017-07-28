@@ -1,6 +1,6 @@
 import theano
-theano.config.gcc.cxxflags='-march=core2'
-theano.config.gcc="C:\TDM-GCC-64\bin\\g++.exe"
+#theano.config.gcc.cxxflags='-march=core2'
+#theano.config.gcc="C:\TDM-GCC-64\bin\\g++.exe"
 import pymc3
 import scipy
 import collections
@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import abc
-from base_models import Regression
+from .base_models import Regression
 
 class BayesianRegression(Regression):
     """Class for Bayesian Regression models. 

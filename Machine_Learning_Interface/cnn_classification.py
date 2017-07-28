@@ -1,5 +1,5 @@
 import theano
-theano.config.gcc.cxxflags='-march=core2'
+#theano.config.gcc.cxxflags='-march=core2'
 import pandas as pd
 import numpy as np
 import keras
@@ -9,7 +9,7 @@ from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation, Flatten
 from keras.layers import Convolution2D, ZeroPadding2D, MaxPooling2D
 from sklearn.model_selection import train_test_split
-from base_models import Classification
+from .base_models import Classification
 
 class CNNClassification(Classification): #Basic CNN
     def __init__(self, intercept=False, scale=False, prob=False, batch_size=25, n_epoch=10, train_size=.8, loss='categorical_crossentropy', nb_filters=32, pool_size = (2,2), kernel_size = (3,3), model_provided=None):
