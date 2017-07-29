@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from sklearn import lda, discriminant_analysis
 import statsmodels.api as sm
-from base_models import Classification
+from .base_models import Classification
 
 class LDA(Classification):
     """Class for Linear Discriminant Analysis Models.

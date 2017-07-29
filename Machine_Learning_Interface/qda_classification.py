@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from sklearn import qda, discriminant_analysis
-from base_models import Classification
+from .base_models import Classification
 
 class QDA(Classification):
     """Class for Quadratic Discriminant Analysis Models.

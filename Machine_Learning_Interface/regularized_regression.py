@@ -4,8 +4,8 @@ from sklearn import linear_model
 from cycler import cycler
 import matplotlib.pyplot as plt
 import abc
-from base_models import Regression
-import scikit_mixin
+from .base_models import Regression
+from . import scikit_mixin
 import warnings
 warnings.filterwarnings('ignore')
 

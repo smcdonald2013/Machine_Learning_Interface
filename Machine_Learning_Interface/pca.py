@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
 from sklearn import decomposition
-from base_models import DimensionalityReduction
-import scikit_mixin
+from .base_models import DimensionalityReduction
+from . import scikit_mixin
 import matplotlib.pyplot as plt
 
 class PCA(DimensionalityReduction):

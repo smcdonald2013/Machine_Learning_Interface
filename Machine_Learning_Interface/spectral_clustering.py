@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
-from base_models import DimensionalityReduction
-import scikit_mixin
+from .base_models import DimensionalityReduction
+from . import scikit_mixin
 from sklearn import cluster
 from scipy import linalg
 import matplotlib.pyplot as plt

@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd 
 from sklearn import svm, model_selection
-from base_models import Regression
-import scikit_mixin
+from .base_models import Regression
+from . import scikit_mixin
 
 class SVR(Regression):
     """Class for Support Vector Regression Models, utilizing sklearn which implements LibSVM and LibLinear.

@@ -3,7 +3,7 @@ import pandas as pd
 from sklearn import grid_search, learning_curve, tree, ensemble
 import matplotlib.pyplot as plt
 from .base_models import Regression
-import scikit_mixin
+from . import scikit_mixin
 
 class DTR(Regression):
     """Class for Decision Tree Regression Models. 

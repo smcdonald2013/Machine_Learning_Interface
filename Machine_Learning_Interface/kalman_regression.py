@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from pykalman import KalmanFilter
 import abc
-from base_models import Regression
+from .base_models import Regression
 import matplotlib.pyplot as plt
 
 class KalmanRegression(Regression):

@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from sklearn import naive_bayes
-from base_models import Classification
+from .base_models import Classification
 
 class NaiveBayesClassification(Classification):
     """Class for Naive Bayes Models.

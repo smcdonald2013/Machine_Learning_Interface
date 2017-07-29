@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
 from scipy import linalg
-from base_models import DimensionalityReduction
-import scikit_mixin
+from .base_models import DimensionalityReduction
+from . import scikit_mixin
 from sklearn import mixture
 import matplotlib.pyplot as plt
 import itertools

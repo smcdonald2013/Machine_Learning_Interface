@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import sklearn as sk
 import abc
-import scikit_mixin
+from . import scikit_mixin
 
 class Model(object): 
     """Abstract base class for models.

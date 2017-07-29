@@ -2,8 +2,8 @@ import numpy as np
 import pandas as pd 
 from sklearn import grid_search, learning_curve, svm, model_selection
 import matplotlib.pyplot as plt
-from base_models import Classification
-import scikit_mixin
+from .base_models import Classification
+from . import scikit_mixin
 
 class SVC(Classification):
     """Class for Support Vector Classification Models.

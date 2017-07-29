@@ -3,7 +3,7 @@
 import pandas as pd
 import keras
 import abc
-from base_models import Regression
+from .base_models import Regression
 
 class NeuralNetRegression(Regression): #MLP
     def __init__(self, intercept=False, scale=False, batch_size=25, n_epoch=10, loss='mean_squared_error', model_provided=None):

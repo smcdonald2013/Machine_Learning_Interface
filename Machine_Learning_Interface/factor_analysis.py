@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
-from base_models import DimensionalityReduction
+from .base_models import DimensionalityReduction
 from sklearn import linear_model
-import scikit_mixin
+from . import scikit_mixin
 import matplotlib.pyplot as plt
 
 class FactorAnalysis(DimensionalityReduction):
