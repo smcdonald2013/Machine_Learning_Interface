@@ -32,6 +32,7 @@ class LDA(Classification):
         """
         model = discriminant_analysis.LinearDiscriminantAnalysis(**self.kwargs)
         model.fit(self.x_train, self.y_train)
+        self.underlying = model
         return model
 
     def _estimate_coefficients(self):

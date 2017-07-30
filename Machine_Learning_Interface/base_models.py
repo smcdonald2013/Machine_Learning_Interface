@@ -251,7 +251,7 @@ class Classification(Model):
         if self.prob:
             self.prob_array = self._estimate_prob()
             self.log_loss = self._estimate_log_loss()
-            scikit_mixin.plot_calibration_curve(self.model, 'Model', self.x_train, self.y_train)
+            scikit_mixin.plot_calibration_curve(self.underlying, 'Model', self.x_train, self.y_train)
         self.accuracy                                 = self._estimate_accuracy()
         scikit_mixin.confusion_matrix_plot(self.y_train, self.fittedvalues)
         scikit_mixin.roc_curve_plot(self.y_train, self.fittedvalues)

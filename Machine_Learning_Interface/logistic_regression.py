@@ -49,6 +49,7 @@ class LogisticRegression(Classification):
         else: 
             self.underlying = sm.GLM(self.y_train, self.x_train, family=sm.families.Binomial())
             model = self.underlying.fit()
+        self.underlying = model
         return model
 
     def _estimate_coefficients(self):

@@ -50,6 +50,7 @@ class SVC(Classification):
         else:
             model = self.underlying
         model.fit(self.x_train, self.y_train)
+        self.underlying = model.best_estimator_
         return model
 
     def _estimate_coefficients(self):
@@ -61,10 +62,11 @@ class SVC(Classification):
             Coefficients of the model. None if kernel != 'linear'
         """
         if self.kernel=='linear':
-            coef_array =  np.append(self.model.coef_,self.model.intercept_)
+            model = self.underlying if self.cv_folds is None else self.model.best_estimator_
+            coef_array =  np.append(model.coef_, model.intercept_)
             coef_names = np.append(self.x_train.columns, 'intercept')
             coef_df = pd.Series(data=coef_array, index=coef_names, name = 'coefficients')
-        else: 
+        else:
             coef_df = None
         return coef_df
 
@@ -101,7 +103,7 @@ class SVC(Classification):
         if self.cv_folds is not None:
             self.cv_params = self.model.best_params_
             self.cv_results = pd.DataFrame(self.model.cv_results_)
-            self.underlying = self.model.best_estimator_
+            #self.underlying = self.model.best_estimator_
             #self.grid_scores = self.model.grid_scores_
             #self.validation_plot()
             #self.plot_calibration_curve(self.underlying, 'SVM Classification', self.x_train, self.y_train, self.x_train, self.y_train)

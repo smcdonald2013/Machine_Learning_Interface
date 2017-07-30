@@ -7,7 +7,7 @@ from scipy import linalg
 import matplotlib.pyplot as plt
 from scipy import sparse
 from cycler import cycler
-import kmeans_clustering
+from . import kmeans_clustering
 import itertools
 import functools
 
