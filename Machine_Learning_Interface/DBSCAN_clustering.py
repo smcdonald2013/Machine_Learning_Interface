@@ -38,6 +38,7 @@ class DBSCAN(DimensionalityReduction):
 
         model = cluster.DBSCAN(**self.kwargs)
         model.fit(self.x_train)
+        #model.fit(adj_mat)
         self.labels = model.labels_
         return model
 
@@ -68,7 +69,8 @@ class DBSCAN(DimensionalityReduction):
         unique_labels = set(cluster_labels)
         n_clusters_ = len(unique_labels) - (1 if -1 in unique_labels else 0) #Noise is not a cluster
 
-        colors = plt.cm.spectral(np.linspace(.1, .9, len(unique_labels)))
+        #colors = plt.cm.spectral(np.linspace(.1, .9, len(unique_labels)))
+        colors = np.array([x for x in 'bgrcmykbgrcmykbgrmcykbgrmcyk'])
         core_samples_mask = np.zeros_like(cluster_labels, dtype=bool)
         core_samples_mask[core_samples] = True
 
