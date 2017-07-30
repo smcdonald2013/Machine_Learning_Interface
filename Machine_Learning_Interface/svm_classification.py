@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd 
-from sklearn import grid_search, learning_curve, svm, model_selection
+from sklearn import svm, model_selection
 import matplotlib.pyplot as plt
 from .base_models import Classification
 from . import scikit_mixin
@@ -44,7 +44,7 @@ class SVC(Classification):
         model : sklearn SVR model or grid search cv object
             Fitted object.
         """
-        self.underlying = svm.SVC(kernel=self.kernel, **self.kwargs)
+        self.underlying = svm.SVC(kernel=self.kernel, probability=self.prob, **self.kwargs)
         if self.cv_folds is not None: 
             model = model_selection.GridSearchCV(self.underlying, self.parameters, cv=self.cv_folds, scoring=self.score)
         else:
@@ -100,7 +100,9 @@ class SVC(Classification):
         self.coefs  = self._estimate_coefficients()
         if self.cv_folds is not None:
             self.cv_params = self.model.best_params_
-            self.grid_scores = self.model.grid_scores_
+            self.cv_results = pd.DataFrame(self.model.cv_results_)
+            self.underlying = self.model.best_estimator_
+            #self.grid_scores = self.model.grid_scores_
             #self.validation_plot()
             #self.plot_calibration_curve(self.underlying, 'SVM Classification', self.x_train, self.y_train, self.x_train, self.y_train)
             scikit_mixin.validation_plot(estimator=self.underlying, title='SVM Validation Plot', X=self.x_train, y=self.y_train, cv=5, scoring='mean_squared_error', param_name='C', param_range=self.parameters[0]['C'], cv_param=self.model.best_params_['C'])
@@ -134,90 +136,4 @@ class SVC(Classification):
             Array of fitted probbilities.
         """
         prob_array = self.model.predict_proba(self.x_train)
-        return prob_array  
-
-    def validation_plot(self):
-        param_name = "C"
-        param_range = self.parameters[0][param_name]
-        train_scores, test_scores = learning_curve.validation_curve(
-            self.underlying, self.x_train, self.y_train, param_name=param_name, param_range=param_range,
-            cv=5, scoring="mean_squared_error")
-        train_scores = -train_scores
-        test_scores = -test_scores
-        train_scores_mean = np.mean(train_scores, axis=1)
-        train_scores_std = np.std(train_scores, axis=1)
-        test_scores_mean = np.mean(test_scores, axis=1)
-        test_scores_std = np.std(test_scores, axis=1)
-        train_scores_max = np.max(train_scores)
-        train_scores_min = np.min(train_scores)
-
-        plt.title('Validation Curve')
-        plt.xlabel('Parameter')
-        plt.ylabel('Accuracy')
-        plt.ylim(train_scores_min,train_scores_max)
-        plt.semilogx(param_range, train_scores_mean, label="Training score", color="r")
-        plt.fill_between(param_range, train_scores_mean - train_scores_std,
-                 train_scores_mean + train_scores_std, alpha=0.2, color="r")
-        plt.semilogx(param_range, test_scores_mean, label="Cross-validation score",
-             color="g")
-        plt.fill_between(param_range, test_scores_mean - test_scores_std,
-                 test_scores_mean + test_scores_std, alpha=0.2, color="g")
-        plt.legend(loc="best")
-        plt.show()
-
-    def plot_calibration_curve(self, est, name, X, y, X_val, y_val):
-        """Plot calibration curve for est w/o and with calibration. """
-        # Calibrated with isotonic calibration
-        isotonic = CalibratedClassifierCV(est, cv=2, method='isotonic')
-
-        # Calibrated with sigmoid calibration
-        sigmoid = CalibratedClassifierCV(est, cv=2, method='sigmoid')
-
-        # Logistic regression with no calibration as baseline
-        lr = LogisticRegression(C=1., solver='lbfgs')
-
-        fig = plt.figure()
-        ax1 = plt.subplot2grid((3, 1), (0, 0), rowspan=2)
-        ax2 = plt.subplot2grid((3, 1), (2, 0))
-
-        ax1.plot([0, 1], [0, 1], "k:", label="Perfectly calibrated")
-        for clf, name in [(lr, 'Logistic'),
-                          (est, name),
-                          (isotonic, name + ' + Isotonic'),
-                          (sigmoid, name + ' + Sigmoid')]:
-            clf.fit(X, y)
-            y_pred = clf.predict(X_val)
-            if hasattr(clf, "predict_proba"):
-                prob_pos = clf.predict_proba(X_val)[:, 1]
-            else:  # use decision function
-                prob_pos = clf.decision_function(X_val)
-                prob_pos = \
-                    (prob_pos - prob_pos.min()) / (prob_pos.max() - prob_pos.min())
-
-            clf_score = brier_score_loss(y_val, prob_pos, pos_label=y.max())
-            print("%s:" % name)
-            print("\tBrier: %1.3f" % (clf_score))
-            print("\tPrecision: %1.3f" % precision_score(y_val, y_pred))
-            print("\tRecall: %1.3f" % recall_score(y_val, y_pred))
-            print("\tF1: %1.3f\n" % f1_score(y_val, y_pred))
-
-            fraction_of_positives, mean_predicted_value = \
-                calibration_curve(y_val, prob_pos, n_bins=10)
-
-            ax1.plot(mean_predicted_value, fraction_of_positives, "s-",
-                     label="%s (%1.3f)" % (name, clf_score))
-
-            ax2.hist(prob_pos, range=(0, 1), bins=10, label=name,
-                     histtype="step", lw=2)
-
-        ax1.set_ylabel("Fraction of positives")
-        ax1.set_ylim([-0.05, 1.05])
-        ax1.legend(loc="lower right")
-        ax1.set_title('Calibration plots  (reliability curve)')
-
-        ax2.set_xlabel("Mean predicted value")
-        ax2.set_ylabel("Count")
-        ax2.legend(loc="upper center", ncol=2)
-
-        plt.tight_layout()
-        plt.show()
+        return prob_array

@@ -96,6 +96,7 @@ class SVR(Regression):
             self.cv_params = self.model.best_params_
             self.cv_results = pd.DataFrame(self.model.cv_results_)
             self.underlying = self.model.best_estimator_
+            self.model = self.underlying #Do I really want this?
             scikit_mixin.validation_plot(estimator=self.underlying, title='SVM Validation Plot', X=self.x_train, y=self.y_train, cv=5, scoring='mean_squared_error', param_name='C', param_range=self.parameters[0]['C'], cv_param=self.model.best_params_['C'])
             scikit_mixin.learning_curve_plot(estimator=self.underlying, title='SVM Learning Curve', X=self.x_train, y=self.y_train, cv=5, scoring='mean_squared_error')
 

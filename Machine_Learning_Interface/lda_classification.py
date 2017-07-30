@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from sklearn import lda, discriminant_analysis
+from sklearn import discriminant_analysis
 import statsmodels.api as sm
 from .base_models import Classification
 
