@@ -53,7 +53,7 @@ class LogisticRegression(Classification):
         return model
 
     def _estimate_coefficients(self):
-        """Returns fitted coeficients. For logistic regression, these are the 'log odds'.
+        """Returns fitted coefficients. For logistic regression, these are the 'log odds'.
 
         Returns
         -------

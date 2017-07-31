@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 from sklearn import naive_bayes
 from .base_models import Classification
@@ -51,7 +50,7 @@ class NaiveBayesClassification(Classification):
         Returns
         -------
         prob_array : np.array (n_samples, n_classes)
-            Array of fitted probbilities.
+            Array of fitted probabilities.
         """
 
         prob_array = self.model.predict_proba(self.x_train)

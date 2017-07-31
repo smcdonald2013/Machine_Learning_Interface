@@ -46,7 +46,7 @@ class Model(object):
 
     def fit(self, x_train, y_train):
         """Fit the model using x_train, y_train as training data.
-        This method is not intended to be overridden/exntended by derived classes in general.
+        This method is not intended to be overridden/extended by derived classes in general.
         _estimate_model is the method unique to each subclass that should do 
         subclass-specific fitting. 
 
@@ -80,7 +80,7 @@ class Model(object):
     @abc.abstractmethod
     def predict(self, x_val): 
         """Abstract base method for making predictions from fitted model.
-        This method should typicaly be extended in derived classes, 
+        This method should typically be extended in derived classes,
         rather than completely overridden. It should be extended to 
         return a pandas Series containing the predictions. 
 
@@ -139,8 +139,7 @@ class Model(object):
         Returns
         ----------
         scaled_data_df : pd.DataFrame, shape (n_samples, n_features)
-            Scaled data. 
-
+            Scaled data.
         """
         if rescale:
             self.scaler =   sk.preprocessing.StandardScaler().fit(data)
@@ -213,6 +212,7 @@ class Regression(Model):
         raise NotImplementedError()
 
     def _estimate_residuals(self):
+        """The residuals are the differences between the y values and the fitted values."""
         resids = pd.Series(self.y_train.subtract(self.fittedvalues), name = 'resid')
         return resids
 
@@ -234,7 +234,22 @@ class Regression(Model):
         mse = sk.metrics.mean_squared_error(self.fittedvalues, self.y_train)
         return mse
 
-class Classification(Model): 
+class Classification(Model):
+    """Abstract base class for classification models.
+    Do not create instances of this class for modeling!
+    Use derived classes. Note that all derived classes should
+    contain the attributes listed.
+
+    Attributes
+    ----------
+    accuracy : float
+        Accuracy of the training data.
+    underlying : model object
+        Underlying should be the model object, i.e. sklearn LogisticRegression.
+    model : model object or CV  object
+        Model is the CV object for models implementing cross-validation.
+    """
+
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, scale=False, intercept=False, prob=False):    
@@ -341,7 +356,7 @@ class DimensionalityReduction(object):
 
     @abc.abstractmethod
     def diagnostics(self): 
-        """Abstract base method for performing modeling diagostics.
+        """Abstract base method for performing modeling diagnostics.
         This method should typically be extended in derived classes, 
         rather than completely overridden. 
         """
@@ -350,7 +365,7 @@ class DimensionalityReduction(object):
     @abc.abstractmethod
     def transform(self, x_val): 
         """Abstract base method for transforming data from fitted model.
-        This method should typicaly be extended in derived classes, 
+        This method should typically be extended in derived classes,
         rather than completely overridden. It should be extended to 
         return a pandas Series containing the transformed data. 
 
@@ -409,8 +424,7 @@ class DimensionalityReduction(object):
         Returns
         ----------
         scaled_data_df : pd.DataFrame, shape (n_samples, n_features)
-            Scaled data. 
-
+            Scaled data.
         """
         if rescale:
             self.scaler =   sk.preprocessing.StandardScaler().fit(data)
