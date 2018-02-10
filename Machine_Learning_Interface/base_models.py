@@ -266,10 +266,12 @@ class Classification(Model):
         if self.prob:
             self.prob_array = self._estimate_prob()
             self.log_loss = self._estimate_log_loss()
-            scikit_mixin.plot_calibration_curve(self.underlying, 'Model', self.x_train, self.y_train)
+            if self.n_classes == 2:
+                scikit_mixin.plot_calibration_curve(self.underlying, 'Model', self.x_train, self.y_train)
         self.accuracy                                 = self._estimate_accuracy()
         scikit_mixin.confusion_matrix_plot(self.y_train, self.fittedvalues)
-        scikit_mixin.roc_curve_plot(self.y_train, self.fittedvalues)
+        if self.n_classes == 2:
+            scikit_mixin.roc_curve_plot(self.y_train, self.fittedvalues)
         scikit_mixin.plot_classes(self.x_train, self.fittedvalues, title="Predicted Classes on Space Spanned by Features")
         scikit_mixin.plot_classes(self.x_train, self.y_train, title="Actual Classes on Space Spanned by Features")
         print(sk.metrics.classification_report(self.y_train, self.fittedvalues))
@@ -292,11 +294,18 @@ class Classification(Model):
         raise NotImplementedError()
 
     def _estimate_log_loss(self):
-        log_loss = sk.metrics.log_loss(self.fittedvalues, self.y_train)
+        self.n_classes = len(np.unique(self.y_train))
+        if self.n_classes > 2:
+            lb = sk.preprocessing.LabelBinarizer()
+            y_transform = lb.fit_transform(self.y_train)
+            fitted_transform = lb.fit_transform(self.fittedvalues)
+            log_loss = sk.metrics.log_loss(y_transform, fitted_transform)
+        else:
+            log_loss = sk.metrics.log_loss(self.y_train, self.fittedvalues)
         return log_loss
 
     def _estimate_accuracy(self):
-        accuracy = sk.metrics.accuracy_score(self.fittedvalues, self.y_train)
+        accuracy = sk.metrics.accuracy_score(self.y_train, self.fittedvalues)
         return accuracy
 
 class DimensionalityReduction(object): 
