@@ -153,7 +153,6 @@ class Model(object):
         data = data[['const'] + predictors]
         return data
 
-
 class Regression(Model):
     """Abstract base class for regression models.
     Do not create instances of this class for modeling!
@@ -181,7 +180,7 @@ class Regression(Model):
         self.intercept                                = intercept
         self.scale                                    = scale
 
-    def diagnostics(self): 
+    def diagnostics(self):
         """Abstract base method for performing modeling diagostics.
         This method should typically be extended in derived classes, 
         rather than completely overridden. 
@@ -298,7 +297,7 @@ class Classification(Model):
         if self.n_classes > 2:
             lb = sk.preprocessing.LabelBinarizer()
             y_transform = lb.fit_transform(self.y_train)
-            fitted_transform = lb.fit_transform(self.fittedvalues)
+            fitted_transform = lb.transform(self.fittedvalues)
             log_loss = sk.metrics.log_loss(y_transform, fitted_transform)
         else:
             log_loss = sk.metrics.log_loss(self.y_train, self.fittedvalues)

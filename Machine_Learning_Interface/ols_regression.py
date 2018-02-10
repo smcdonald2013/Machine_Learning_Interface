@@ -57,7 +57,7 @@ class OLSRegression(Regression):
 
     def diagnostics(self):
         """Performs diagnostics for OLS. Most are inherited from base regression model."""
-        super(OLSRegression, self).diagnostics() 
+        super(OLSRegression, self).diagnostics()
         self.coefs  = self._estimate_coefficients()
         print(self.coefs)
 
