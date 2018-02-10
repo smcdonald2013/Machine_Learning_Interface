@@ -43,9 +43,14 @@ class LDA(Classification):
         coef_df : pd.Series
             Coefficients of the model.
         """
-        coef_array =  np.append(self.model.coef_,self.model.intercept_)
-        coef_names = np.append(self.x_train.columns, 'intercept')
-        coef_df = pd.Series(data=coef_array, index=coef_names, name = 'Coefficients')
+        if self.n_classes == 2:
+            coef_array =  np.append(self.model.coef_,self.model.intercept_)
+            coef_names = np.append(self.x_train.columns, 'intercept')
+            coef_df = pd.Series(data=coef_array, index=coef_names, name = 'Coefficients')
+        else:
+            coef_array =  np.append(self.model.coef_,self.model.intercept_.reshape(self.n_classes,1),axis=1)
+            coef_names = np.append(self.x_train.columns, 'intercept')
+            coef_df = pd.DataFrame(data=coef_array, index=coef_names, columns=self.model.classes_)
         return coef_df
 
     def _estimate_fittedvalues(self):

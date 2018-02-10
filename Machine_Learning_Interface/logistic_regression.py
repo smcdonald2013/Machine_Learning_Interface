@@ -61,12 +61,18 @@ class LogisticRegression(Classification):
             Coefficients of the model.
         """
         if self.penalized:
-            coef_array =  np.append(self.model.coef_,self.model.intercept_)
-            coef_names = np.append(self.x_train.columns, 'intercept')
+            if self.n_classes == 2:
+                coef_array =  np.append(self.model.coef_,self.model.intercept_)
+                coef_names = np.append(self.x_train.columns, 'intercept')
+                coef_df = pd.Series(data=coef_array, index=coef_names, name='Log Odds')
+            else:
+                coef_array = np.append(self.model.coef_, self.model.intercept_.reshape(self.n_classes, 1), axis=1)
+                coef_names = np.append(self.x_train.columns, 'intercept')
+                coef_df = pd.DataFrame(data=coef_array, index=coef_names, columns=self.model.classes_)
         else: 
             coef_array = self.model.params
             coef_names = self.x_train.columns
-        coef_df = pd.Series(data=coef_array, index=coef_names, name = 'Log Odds')
+            coef_df = pd.Series(data=coef_array, index=coef_names, name = 'Log Odds')
         return coef_df
 
     def _estimate_fittedvalues(self):
