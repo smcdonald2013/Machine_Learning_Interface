@@ -5,4 +5,5 @@ setup(name='Machine_Learning_Interface',
       description='Interface to Python Packages',
       author='Stephen McDonald',
       packages=find_packages(),
-      zip_safe=False)
+      zip_safe=False,
+      test_suite='unittest2.collector')

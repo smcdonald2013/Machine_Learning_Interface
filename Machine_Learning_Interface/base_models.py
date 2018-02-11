@@ -261,7 +261,8 @@ class Classification(Model):
         This method should typically be extended in derived classes, 
         rather than completely overridden. 
         """
-        super(Classification, self).diagnostics() 
+        super(Classification, self).diagnostics()
+        self.n_classes = len(np.unique(self.y_train))
         if self.prob:
             self.prob_array = self._estimate_prob()
             self.log_loss = self._estimate_log_loss()
@@ -293,7 +294,6 @@ class Classification(Model):
         raise NotImplementedError()
 
     def _estimate_log_loss(self):
-        self.n_classes = len(np.unique(self.y_train))
         if self.n_classes > 2:
             lb = sk.preprocessing.LabelBinarizer()
             y_transform = lb.fit_transform(self.y_train)
