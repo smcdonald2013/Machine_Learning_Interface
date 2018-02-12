@@ -198,10 +198,10 @@ def suite():
     #suite.addTest(ClassificationTests('test_nb'))
     suite.addTest(RegressionTests('test_ols'))
     suite.addTest(RegressionTests('test_lasso'))
-    #suite.addTest(RegressionTests('test_ridge'))
-    #suite.addTest(RegressionTests('test_elastic_net'))
-    #suite.addTest(RegressionTests('test_svr'))
-    #suite.addTest(RegressionTests('test_dtr'))
+    suite.addTest(RegressionTests('test_ridge'))
+    suite.addTest(RegressionTests('test_elastic_net'))
+    suite.addTest(RegressionTests('test_svr'))
+    suite.addTest(RegressionTests('test_dtr'))
     return suite
 
 if __name__ == '__main__':
