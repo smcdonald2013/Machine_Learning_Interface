@@ -37,7 +37,8 @@ class KMeans(DimensionalityReduction):
         cluster_nums = np.linspace(1, n_clusters, n_clusters)
         cluster_columns = ["%s%02d" % t for t in zip(cluster_str, cluster_nums)]
         self.centers = pd.DataFrame(model.cluster_centers_, index=cluster_columns, columns=self.x_train.columns)
-        self.labels = model.labels_
+        #self.labels = model.labels_
+        self.labels = pd.Series(index=self.x_train.index, data=model.labels_, name='clusters')
         self.n_clusters = n_clusters
         return model
 
@@ -83,6 +84,24 @@ class KMeans(DimensionalityReduction):
         cluster_nums = np.linspace(1, n_clusters, n_clusters)
         cluster_columns = ["%s%02d" % t for t in zip(cluster_str, cluster_nums)]
         val_df   = pd.DataFrame(index=self.x_val.index, data=val_pred, columns=cluster_columns)
+        return val_df
+
+    def predict(self, x_val):
+        """Assigns data to clusters.
+
+        Parameters
+        ----------
+        x_val : pd.DataFrame(n_samples, n_features)
+            Data to be clustered.
+
+        Returns
+        -------
+        val_df : pd.Series(n_samples)
+            Clusters assigned by model.
+        """
+        super(KMeans, self).transform(x_val) #dot(x, evecs) transforms data
+        val_pred = self.model.predict(self.x_val)
+        val_df = pd.Series(index=self.x_train.index, data=val_pred, name='clusters')
         return val_df
 
     def _estimate_fittedvalues(self):
