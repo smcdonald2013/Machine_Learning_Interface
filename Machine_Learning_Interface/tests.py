@@ -11,6 +11,10 @@ import Machine_Learning_Interface.lda_classification as lda
 import Machine_Learning_Interface.qda_classification as qda
 import Machine_Learning_Interface.naive_bayes_classification as nb
 import Machine_Learning_Interface.svm_classification as svc
+import Machine_Learning_Interface.kmeans_clustering as kmeans
+import Machine_Learning_Interface.spectral_clustering as sp
+import Machine_Learning_Interface.DBSCAN_clustering as db
+import Machine_Learning_Interface.GMM_clustering as gmm
 import pandas as pd
 from pandas.util import testing
 import numpy as np
@@ -123,7 +127,6 @@ class RegressionTests(CustomTestCase):
         true_pred = pd.Series(data=[2.7, 4.0, 5.3, 6.3, 8.6], name = 'predictions', dtype='float64')
         self.assertSeriesEqual(predictions, true_pred)
 
-
     def test_kalman(self):
         em    = ['transition_covariance', 'observation_covariance', 'initial_state_mean', 'initial_state_covariance']
         model = kr.KalmanRegression(intercept=True, scale=False, em_vars=em)
@@ -170,14 +173,6 @@ class ClassificationTests(CustomTestCase):
         self.assertSeriesEqual(predictions, true_pred)
 
     def test_svc(self):
-        #n_samples = 1000
-        #feat1 = np.array(list(range(n_samples))).reshape(n_samples, 1)
-        #feat2 = feat1 * 2
-        #x_data = np.array([feat1, feat2]).reshape(n_samples, 2)
-        #pos = [1]*(n_samples/2)
-        #neg = [-1]*(n_samples/2)
-        #y_data = np.array(pos+neg).reshape(n_samples)
-        #self.y_multiclass = np.array([1, 1, 1, 2, 2, 2, 3, 3, 3,3]).reshape(15)
         x_data, y_data = datasets.make_classification(n_samples=100, n_features=2, n_redundant=0, n_classes=2, random_state=10)
         model = svc.SVC(scale=True, prob=True, kernel='linear', parameters=[{'C' : np.logspace(-3, 3, 7)}], cv_folds=3)
         model, predictions = model_estimating(model, x_data, y_data)
@@ -186,16 +181,32 @@ class ClassificationTests(CustomTestCase):
         true_pred = pd.Series(data=y_data, name = 'predictions', dtype='int32')
         self.assertSeriesEqual(predictions, true_pred)
 
+class ClusteringTests(CustomTestCase):
+    def setUp(self):
+        feat1 = np.array([-1, -2, -3, -4, -5, 1, 2, 3, 4, 5]).reshape(10, 1)
+        feat2 = feat1 * 2
+        self.x_data = np.array([feat1, feat2]).reshape(10, 2)
+
+    def test_kmeans(self):
+        model = kmeans.KMeans(n_clusters=2, scale=True, random_state=10)
+
+        model.fit(pd.DataFrame(self.x_data))
+        model.diagnostics()
+        #clusters = model.transform(pd.DataFrame(self.x_data))
+        clusters = model.predict(pd.DataFrame(self.x_data))
+        print(clusters)
+        #model, predictions = model_estimating(model, self.x_data, self.y_data)
+        clusters_test = pd.Series(data=[1, 1, 1, 0, 0, 1, 1, 1, 0, 0], name = 'clusters', dtype='int32')
+        self.assertSeriesEqual(clusters, clusters_test)
+
 def model_estimating(model, x_data, y_data):
     model.fit(pd.DataFrame(x_data),pd.Series(y_data))
     model.diagnostics()
     predictions = model.predict(pd.DataFrame(x_data))
     return model, predictions
 
-def suite():
+def regression_suite():
     suite = unittest.TestSuite()
-    #suite.addTest(ClassificationTests('test_svc'))
-    #suite.addTest(ClassificationTests('test_nb'))
     suite.addTest(RegressionTests('test_ols'))
     suite.addTest(RegressionTests('test_lasso'))
     suite.addTest(RegressionTests('test_ridge'))
@@ -204,7 +215,22 @@ def suite():
     suite.addTest(RegressionTests('test_dtr'))
     return suite
 
+def classification_suite():
+    suite = unittest.TestSuite()
+    suite.addTest(ClassificationTests('test_logistic'))
+    suite.addTest(ClassificationTests('test_lda'))
+    suite.addTest(ClassificationTests('test_qda'))
+    suite.addTest(ClassificationTests('test_qda_multi'))
+    suite.addTest(ClassificationTests('test_svc'))
+    suite.addTest(ClassificationTests('test_nb'))
+    return suite
+
+def cluster_suite():
+    suite = unittest.TestSuite()
+    suite.addTest(ClusteringTests('test_kmeans'))
+    return suite
+
 if __name__ == '__main__':
     #unittest.main()
     runner = unittest.TextTestRunner()
-    runner.run(suite())
+    runner.run(cluster_suite())
