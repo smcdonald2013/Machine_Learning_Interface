@@ -7,7 +7,7 @@ from . import scikit_mixin
 class SVR(Regression):
     """Class for Support Vector Regression Models, utilizing sklearn which implements LibSVM and LibLinear.
 
-    Attributes
+    Paramters
     ----------
     intercept : boolean
         Whether to fit an intercept to the model. If True, this adds a column of ones to the x_data.

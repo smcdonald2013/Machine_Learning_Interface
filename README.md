@@ -20,3 +20,7 @@ jupyter notebook --ip=0.0.0.0 --port=8888 --allow-root #Run from within docker i
 #Getting docker IP for jupyter
 docker-machine env #Look in Docker Host
 IP:8888/token=TOKEN FROM DOCKER
+
+#Documentation
+#Go to doc directory
+make html

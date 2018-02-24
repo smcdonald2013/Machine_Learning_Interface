@@ -24,11 +24,11 @@ class DTR(Regression):
 
     Attributes
     ----------
-    self.intercept : boolean
+    intercept : boolean
         Whether to fit an intercept to the model. Ignored if model_provided is not None. 
-    self.scale : boolean
+    scale : boolean
         Whether to scale the data so each variable has mean=0 and variance=1
-    self.cv_folds : int        
+    cv_folds : int
         Number of folds for cross validation. If None, 
     """
     def __init__(self, intercept=False, scale=False, cv_folds=None, parameters=None, reg_type='tree',**kwargs):
