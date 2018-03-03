@@ -33,6 +33,8 @@ class SpectralClustering(DimensionalityReduction):
     def unnormalized_laplacian(self, adjacency_mat, k):
         """ Calculates unnormalized laplacian from adjacency matrix.
 
+        L = D - A
+
         Parameters
         ----------
         adjacency_mat : np.array, shape (n_samples, n_samples)
@@ -67,6 +69,8 @@ class SpectralClustering(DimensionalityReduction):
 
     def random_walk_laplacian(self, adjacency_mat, k):
         """ Calculates random walk laplacian from adjacency matrix.
+
+        L = D^(-1)A
 
         Parameters
         ----------
@@ -105,6 +109,8 @@ class SpectralClustering(DimensionalityReduction):
     def symmetric_laplacian(self, adjacency_mat, k):
         """ Calculates symmetric laplacian from adjacency matrix.
 
+        L = D^(-1/2)AD^(-1/2)
+        
         Parameters
         ----------
         adjacency_mat : np.array, shape (n_samples, n_samples)
