@@ -66,11 +66,27 @@ class KalmanRegression(Regression):
         return kf
 
     def diagnostics(self):
+        """Kalman Regression Diagnostics.
+
+        Default regression diagnostics, coefficients over time, and beta plot.
+        """
         super(KalmanRegression, self).diagnostics() 
         self.coefs = self._estimate_coefficients()
         self.beta_plot()
 
     def predict(self, x_val):
+        """Prediction using fitted model.
+
+        Parameters
+        ----------
+        x_val : pd.DataFrame (n_samples, n_features)
+            X data for making predictions.
+
+        Returns
+        -------
+        val_df : pd.Series (n_samples, )
+            Predicted values.
+        """
         super(KalmanRegression, self).predict(x_val) 
         self.coefs = self._estimate_coefficients()
         new_means, new_covs = self.model.filter_update(self.coefs.values,
@@ -88,6 +104,13 @@ class KalmanRegression(Regression):
         return fitted_vals
 
     def update(self, observation_array, y_observation):
+        """Given new data, updates the model. Currently not used, nor verified.
+
+        Parameters
+        ----------
+        observation_array : np.array, shape (n_samples, n_features)
+        y_observation : np.array, shape (n_samples, 1)
+        """
         x_vals = observation_array
         if self.intercept:
             x_vals = np.insert(x_vals, 0, 1.0)
@@ -104,6 +127,13 @@ class KalmanRegression(Regression):
         self.cov_ts = np.append(self.cov_ts, new_covs)       
 
     def beta_plot(self):
+        """Regularization plot of coefficients over time.
+
+        Returns
+        -------
+        plt : matplotlib figure.
+            Beta Plot.
+        """
         plt.figure()
         plt.plot(self.params_ts)
         plt.xlabel('Date')

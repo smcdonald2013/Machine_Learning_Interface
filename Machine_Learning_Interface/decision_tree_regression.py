@@ -69,6 +69,9 @@ class DTR(Regression):
         return yhat
 
     def diagnostics(self):
+        """Performs diagnostics.
+
+        Generates image of decision tree if that was the modeling choice selected."""
         super(DTR, self).diagnostics() 
         if self.cv_folds is not None:
             self.cv_params = self.model.best_params_
@@ -79,12 +82,33 @@ class DTR(Regression):
             self.tree_image()
 
     def predict(self, x_val):
+        """Prediction using fitted model.
+
+        Parameters
+        ----------
+        x_val : pd.DataFrame (n_samples, n_features)
+            X data for making predictions.
+
+        Returns
+        -------
+        val_df : pd.Series (n_samples, )
+            Predicted values.
+        """
         super(DTR, self).predict(x_val) 
         val_pred = self.model.predict(self.x_val)
         val_df   = pd.Series(index=self.x_val.index, data=val_pred, name='predictions')
         return val_df    
 
     def tree_image(self, output_option='inline'):
+        """Generates image of the decision tree.
+
+        If the tree is complicated, there is no assurance this plot will be readable.
+
+        Parameters
+        ----------
+        output_option : str
+            One of inline (for ipython) or pdf.
+        """
         if output_option=='inline':
             from IPython.display import Image, display 
             from sklearn.externals.six import StringIO

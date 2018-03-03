@@ -7,7 +7,7 @@ from . import scikit_mixin
 class SVR(Regression):
     """Class for Support Vector Regression Models, utilizing sklearn which implements LibSVM and LibLinear.
 
-    Paramters
+    Parameters
     ----------
     intercept : boolean
         Whether to fit an intercept to the model. If True, this adds a column of ones to the x_data.
@@ -24,7 +24,6 @@ class SVR(Regression):
         Sklearn scoring parameter, used in grid search.
     type : str
         Type of SVR to perform. One of 'eps' or 'nu'.
-
     """
     def __init__(self, intercept=False, scale=True, kernel='rbf', parameters=None, cv_folds=None, score=None, type='eps', **kwargs):
         self.intercept      = intercept

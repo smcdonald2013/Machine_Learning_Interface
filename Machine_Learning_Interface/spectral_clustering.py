@@ -31,6 +31,26 @@ class SpectralClustering(DimensionalityReduction):
         self.kwargs         = kwargs
 
     def unnormalized_laplacian(self, adjacency_mat, k):
+        """ Calculates unnormalized laplacian from adjacency matrix.
+
+        Parameters
+        ----------
+        adjacency_mat : np.array, shape (n_samples, n_samples)
+            Adjacency matrix of data.
+        k : Int
+            Number of clusters to estimate
+
+        Returns
+        -------
+        laplacian : np.array (n_samples, n_samples)
+            Estimated laplacian of data.
+        evals : np.array (k, )
+            Estimated eigenvalues.
+        evecs : np.array (n_samples, k)
+            Estimated eigenvectors
+        model : Kmeans model object
+            Estimated kmeans model.
+        """
         if sparse.issparse(adjacency_mat):
             degree_mat = sparse.diags(np.array(adjacency_mat.sum(axis=1).flatten())[0])
             laplacian = degree_mat - adjacency_mat
@@ -46,6 +66,26 @@ class SpectralClustering(DimensionalityReduction):
         return laplacian, evals, evecs, model
 
     def random_walk_laplacian(self, adjacency_mat, k):
+        """ Calculates random walk laplacian from adjacency matrix.
+
+        Parameters
+        ----------
+        adjacency_mat : np.array, shape (n_samples, n_samples)
+            Adjacency matrix of data.
+        k : Int
+            Number of clusters to estimate
+
+        Returns
+        -------
+        laplacian : np.array (n_samples, n_samples)
+            Estimated laplacian of data.
+        evals : np.array (k, )
+            Estimated eigenvalues.
+        evecs : np.array (n_samples, k)
+            Estimated eigenvectors
+        model : Kmeans model object
+            Estimated kmeans model.
+        """
         if sparse.issparse(adjacency_mat):
             degrees = np.array(adjacency_mat.sum(axis=1).flatten())[0]
             inverse_degrees = 1.0 / degrees
@@ -63,6 +103,26 @@ class SpectralClustering(DimensionalityReduction):
         return laplacian, evals, evecs, model
 
     def symmetric_laplacian(self, adjacency_mat, k):
+        """ Calculates symmetric laplacian from adjacency matrix.
+
+        Parameters
+        ----------
+        adjacency_mat : np.array, shape (n_samples, n_samples)
+            Adjacency matrix of data.
+        k : Int
+            Number of clusters to estimate
+
+        Returns
+        -------
+        laplacian : np.array (n_samples, n_samples)
+            Estimated laplacian of data.
+        evals : np.array (k, )
+            Estimated eigenvalues.
+        evecs : np.array (n_samples, k)
+            Estimated eigenvectors
+        model : Kmeans model object
+            Estimated kmeans model.
+        """
         if sparse.issparse(adjacency_mat):
             degrees = np.array(adjacency_mat.sum(axis=1).flatten())[0]
             degrees_neg_sqrt = sparse.diags(degrees**(-.5))
@@ -84,6 +144,19 @@ class SpectralClustering(DimensionalityReduction):
         return laplacian, evals,  evec_norm, model
 
     def kmeans(self, evecs, k):
+        """Implements k-means algorithm, necessary step after e'vecs of laplacian are extracted.
+
+        Parameters
+        ----------
+        evecs : np.array, shape(n_samples, n_evecs)
+        k : int
+            Number of clusters.
+
+        Returns
+        -------
+        model : KMeans Model Object
+            Fitted kmeans model.
+        """
         model = kmeans_clustering.KMeans(n_clusters=k)
         model.fit(pd.DataFrame(evecs))
         return model
@@ -136,6 +209,13 @@ class SpectralClustering(DimensionalityReduction):
         return plt
 
     def plot_evecs(self, evecs, labels):
+        """Plot of the eigenvectors of the Laplacian.
+
+        Parameters
+        ----------
+        evecs : np.array, shape(n_samples, n_evecs)
+        labels : List of strings
+        """
         plt.autoscale(enable=True, axis='both', tight=None)
         fig = plt.figure()
         for i in range(1, evecs.shape[1]+1):

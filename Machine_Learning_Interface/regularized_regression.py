@@ -15,7 +15,7 @@ class RegularizedRegression(Regression):
     Use derived classes. Note that all derived classes should
     contain the attributes listed.
 
-    Attributes
+    Parameters
     ----------
     intercept : boolean
         Whether to fit an intercept to the model.
@@ -107,7 +107,7 @@ class RegularizedRegression(Regression):
         return data
 
     def regularization_plot(self):
-        """Regularization plot of coffiecients vs regularization parameter.
+        """Regularization plot of coefficients vs regularization parameter.
 
         Returns
         -------
@@ -135,7 +135,19 @@ class RegularizedRegression(Regression):
         raise NotImplementedError()
 
 class LassoRegression(RegularizedRegression):
-    """Fits Lasso regression using sklearn implementation."""
+    """Fits Lasso regression using sklearn implementation.
+
+    Parameters
+    ----------
+    intercept : boolean
+        Whether to fit an intercept to the model.
+    scale : boolean
+        Whether to scale the data so each variable has mean=0 and variance=1
+    cv_folds : int
+        Number of folds for k-fold cross validation
+    solver : str
+        Solver to be used by sklearn, dependent on underlying model fit.
+    """
 
     def _estimate_model(self):
         """Estimates lasso regression object.
@@ -173,7 +185,19 @@ class LassoRegression(RegularizedRegression):
         self.coefs_cv = self.coefs_cv.T
         
 class RidgeRegression(RegularizedRegression):
-    """Fits Ridge regression using sklearn implementation."""
+    """Fits Ridge regression using sklearn implementation.
+
+    Parameters
+    ----------
+    intercept : boolean
+        Whether to fit an intercept to the model.
+    scale : boolean
+        Whether to scale the data so each variable has mean=0 and variance=1
+    cv_folds : int
+        Number of folds for k-fold cross validation
+    solver : str
+        Solver to be used by sklearn, dependent on underlying model fit.
+    """
 
     def _estimate_model(self):
         """Estimates ridge regression model.
@@ -202,7 +226,19 @@ class RidgeRegression(RegularizedRegression):
             self.coefs_cv.append(self.underlying.coef_)
             
 class ElasticNetRegression(RegularizedRegression):
-    """Fits Elastic Net Regression using sklearn implementation."""
+    """Fits Elastic Net Regression using sklearn implementation.
+
+    Parameters
+    ----------
+    intercept : boolean
+        Whether to fit an intercept to the model.
+    scale : boolean
+        Whether to scale the data so each variable has mean=0 and variance=1
+    cv_folds : int
+        Number of folds for k-fold cross validation
+    solver : str
+        Solver to be used by sklearn, dependent on underlying model fit.
+    """
 
     def _estimate_model(self):
         """Estimates elastic net regression model.
